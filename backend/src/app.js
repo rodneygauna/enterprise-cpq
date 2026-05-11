@@ -46,6 +46,7 @@ const authLimiter = rateLimit({
 
 // Routes
 app.use("/api/auth", authLimiter, require("./routes/auth"));
+app.use("/api/settings", require("./routes/settings"));
 
 // 404 handler
 app.use((req, res) => {
