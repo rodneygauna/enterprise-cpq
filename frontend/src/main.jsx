@@ -35,7 +35,7 @@ const router = createBrowserRouter(
         {
           index: true,
           element: (
-            <div className="container py-4">
+            <div className="container-fluid py-4">
               <h1>Welcome to Enterprise CPQ</h1>
               <p className="text-muted">
                 Additional features are being implemented. Check back soon.

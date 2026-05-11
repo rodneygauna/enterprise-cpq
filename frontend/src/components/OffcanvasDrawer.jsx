@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 
 /**
  * Reusable animated offcanvas drawer (slide-in from the right).
@@ -20,7 +20,6 @@ export default function OffcanvasDrawer({
 }) {
   const [mounted, setMounted] = useState(false);
   const [show, setShow] = useState(false);
-  const closeButtonRef = useRef(null);
 
   useEffect(() => {
     if (open) {
@@ -33,13 +32,6 @@ export default function OffcanvasDrawer({
       return () => clearTimeout(timer);
     }
   }, [open]);
-
-  // Move focus to the close button when drawer opens
-  useEffect(() => {
-    if (show && closeButtonRef.current) {
-      closeButtonRef.current.focus();
-    }
-  }, [show]);
 
   if (!mounted) return null;
 
@@ -61,7 +53,6 @@ export default function OffcanvasDrawer({
         <div className="offcanvas-header border-bottom">
           <h2 className="offcanvas-title h5">{title}</h2>
           <button
-            ref={closeButtonRef}
             type="button"
             className="btn-close"
             aria-label={`Close ${title}`}

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import RequireRole from "../components/RequireRole";
+import OffcanvasDrawer from "../components/OffcanvasDrawer";
 import {
   getProductLines,
   createProductLine,
@@ -34,10 +35,17 @@ function ProductLinesPanel() {
   const [loading, setLoading] = useState(true);
 
   // Form state — shared between "add" and "edit" modes
-  const [editingId, setEditingId] = useState(null); // null = add mode
+  const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState({ name: "", displayColor: "" });
   const [formErrors, setFormErrors] = useState({});
   const [saving, setSaving] = useState(false);
+
+  // Drawer state
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  // View drawer state
+  const [viewLine, setViewLine] = useState(null);
+  const [viewOpen, setViewOpen] = useState(false);
 
   // Confirm-delete state
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -50,19 +58,37 @@ function ProductLinesPanel() {
       .finally(() => setLoading(false));
   }, []);
 
-  // ── Form helpers ────────────────────────────────────────────────────────────
+  // ── Drawer helpers ──────────────────────────────────────────────────────────
 
-  function resetForm() {
+  function openAddDrawer() {
     setEditingId(null);
     setForm({ name: "", displayColor: "" });
     setFormErrors({});
+    setDrawerOpen(true);
   }
 
-  function startEdit(line) {
+  function openEditDrawer(line) {
     setEditingId(line._id);
     setForm({ name: line.name, displayColor: line.displayColor ?? "" });
     setFormErrors({});
+    setDrawerOpen(true);
   }
+
+  function closeDrawer() {
+    setDrawerOpen(false);
+    setFormErrors({});
+  }
+
+  function openViewDrawer(line) {
+    setViewLine(line);
+    setViewOpen(true);
+  }
+
+  function closeViewDrawer() {
+    setViewOpen(false);
+  }
+
+  // ── Form helpers ────────────────────────────────────────────────────────────
 
   const handleFormChange = (e) => {
     const { name, value } = e.target;
@@ -99,7 +125,7 @@ function ProductLinesPanel() {
         setLines((prev) => [...prev, created]);
         toast.success("Product line created.");
       }
-      resetForm();
+      closeDrawer();
     } catch (err) {
       toast.error(err.response?.data?.error ?? "Failed to save product line.");
     } finally {
@@ -112,7 +138,6 @@ function ProductLinesPanel() {
   const handleReorder = async (id, direction) => {
     try {
       await reorderProductLine(id, direction);
-      // Re-fetch to get accurate sortOrder values
       const refreshed = await getProductLines();
       setLines(refreshed);
     } catch {
@@ -143,233 +168,283 @@ function ProductLinesPanel() {
 
   if (loading) {
     return (
-      <div className="container py-4" aria-live="polite" aria-busy="true">
+      <div className="container-fluid py-4" aria-live="polite" aria-busy="true">
         <p>Loading product lines…</p>
       </div>
     );
   }
 
   return (
-    <div className="container py-4">
-      <h1 className="h3 mb-1">Product Line Management</h1>
+    <div className="container-fluid py-4">
+      <div className="d-flex justify-content-between align-items-center mb-1">
+        <h1 className="h3 mb-0">Product Line Management</h1>
+        <button
+          type="button"
+          className="btn btn-primary"
+          onClick={openAddDrawer}
+        >
+          + Add Product Line
+        </button>
+      </div>
       <p className="text-muted mb-4">
         Create, rename, reorder, and delete product lines. Deletion is blocked
         if products are assigned to the line.
       </p>
 
-      <div className="row g-4">
-        {/* ── Left: current lines table ── */}
-        <div className="col-lg-7">
-          <section aria-labelledby="lines-heading">
-            <h2 id="lines-heading" className="h5 mb-3">
-              Current Product Lines
-            </h2>
+      {lines.length === 0 ? (
+        <p className="text-muted fst-italic">
+          No product lines yet. Add one using the button above.
+        </p>
+      ) : (
+        <div className="table-responsive">
+          <table className="table table-bordered align-middle">
+            <thead className="table-light">
+              <tr>
+                <th scope="col">Order</th>
+                <th scope="col">Name</th>
+                <th scope="col">Color</th>
+                <th scope="col">
+                  <span className="visually-hidden">Actions</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {lines.map((line, idx) => (
+                <tr key={line._id}>
+                  <td className="text-center" style={{ width: "6rem" }}>
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-outline-secondary me-1"
+                      onClick={() => handleReorder(line._id, "up")}
+                      disabled={idx === 0}
+                      aria-label={`Move ${line.name} up`}
+                    >
+                      ↑
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-outline-secondary"
+                      onClick={() => handleReorder(line._id, "down")}
+                      disabled={idx === lines.length - 1}
+                      aria-label={`Move ${line.name} down`}
+                    >
+                      ↓
+                    </button>
+                  </td>
+                  <td>
+                    <button
+                      className="btn btn-link p-0 text-start fw-semibold"
+                      onClick={() => openViewDrawer(line)}
+                      aria-label={`View details for ${line.name}`}
+                    >
+                      {line.name}
+                    </button>
+                  </td>
+                  <td>
+                    {line.displayColor ? (
+                      <span className="d-flex align-items-center gap-2">
+                        <span
+                          style={{
+                            display: "inline-block",
+                            width: "1.25rem",
+                            height: "1.25rem",
+                            borderRadius: "50%",
+                            backgroundColor: line.displayColor,
+                            border: "1px solid rgba(0,0,0,.2)",
+                          }}
+                          aria-hidden="true"
+                        />
+                        <code>{line.displayColor}</code>
+                      </span>
+                    ) : (
+                      <span className="text-muted fst-italic">None</span>
+                    )}
+                  </td>
+                  <td className="text-end" style={{ whiteSpace: "nowrap" }}>
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-outline-primary me-1"
+                      onClick={() => openEditDrawer(line)}
+                      aria-label={`Edit ${line.name}`}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-outline-danger"
+                      onClick={() => setDeleteTarget(line)}
+                      aria-label={`Delete ${line.name}`}
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
-            {lines.length === 0 ? (
-              <p className="text-muted fst-italic">
-                No product lines yet. Add one using the form.
-              </p>
-            ) : (
-              <div className="table-responsive">
-                <table className="table table-bordered align-middle">
-                  <thead className="table-light">
-                    <tr>
-                      <th scope="col">Order</th>
-                      <th scope="col">Name</th>
-                      <th scope="col">Color</th>
-                      <th scope="col">
-                        <span className="visually-hidden">Actions</span>
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {lines.map((line, idx) => (
-                      <tr key={line._id}>
-                        <td className="text-center" style={{ width: "6rem" }}>
-                          <button
-                            type="button"
-                            className="btn btn-sm btn-outline-secondary me-1"
-                            onClick={() => handleReorder(line._id, "up")}
-                            disabled={idx === 0}
-                            aria-label={`Move ${line.name} up`}
-                          >
-                            ↑
-                          </button>
-                          <button
-                            type="button"
-                            className="btn btn-sm btn-outline-secondary"
-                            onClick={() => handleReorder(line._id, "down")}
-                            disabled={idx === lines.length - 1}
-                            aria-label={`Move ${line.name} down`}
-                          >
-                            ↓
-                          </button>
-                        </td>
-                        <td>{line.name}</td>
-                        <td>
-                          {line.displayColor ? (
-                            <span className="d-flex align-items-center gap-2">
-                              <span
-                                style={{
-                                  display: "inline-block",
-                                  width: "1.25rem",
-                                  height: "1.25rem",
-                                  borderRadius: "50%",
-                                  backgroundColor: line.displayColor,
-                                  border: "1px solid rgba(0,0,0,.2)",
-                                }}
-                                aria-hidden="true"
-                              />
-                              <code>{line.displayColor}</code>
-                            </span>
-                          ) : (
-                            <span className="text-muted fst-italic">None</span>
-                          )}
-                        </td>
-                        <td
-                          className="text-end"
-                          style={{ whiteSpace: "nowrap" }}
-                        >
-                          <button
-                            type="button"
-                            className="btn btn-sm btn-outline-primary me-1"
-                            onClick={() => startEdit(line)}
-                            aria-label={`Edit ${line.name}`}
-                          >
-                            Edit
-                          </button>
-                          <button
-                            type="button"
-                            className="btn btn-sm btn-outline-danger"
-                            onClick={() => setDeleteTarget(line)}
-                            aria-label={`Delete ${line.name}`}
-                          >
-                            Delete
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+      {/* ── Add / Edit Drawer ── */}
+      <OffcanvasDrawer
+        open={drawerOpen}
+        title={editingId ? "Edit Product Line" : "Add Product Line"}
+        onClose={closeDrawer}
+      >
+        <form
+          onSubmit={handleSubmit}
+          noValidate
+          aria-label={editingId ? "Edit product line" : "Add product line"}
+        >
+          {/* Name */}
+          <div className="mb-3">
+            <label htmlFor="pl-name" className="form-label">
+              Name{" "}
+              <span className="text-muted fw-normal small">(required)</span>
+            </label>
+            <input
+              id="pl-name"
+              name="name"
+              type="text"
+              className={`form-control${formErrors.name ? " is-invalid" : ""}`}
+              value={form.name}
+              onChange={handleFormChange}
+              required
+              aria-required="true"
+              aria-describedby={formErrors.name ? "pl-name-error" : undefined}
+              aria-invalid={formErrors.name ? true : undefined}
+              placeholder="e.g. Care Management"
+            />
+            {formErrors.name && (
+              <div id="pl-name-error" className="invalid-feedback">
+                {formErrors.name}
               </div>
             )}
-          </section>
-        </div>
+          </div>
 
-        {/* ── Right: add / edit form ── */}
-        <div className="col-lg-5">
-          <section aria-labelledby="form-heading">
-            <h2 id="form-heading" className="h5 mb-3">
-              {editingId ? "Edit Product Line" : "Add Product Line"}
-            </h2>
+          {/* Display Color */}
+          <div className="mb-3">
+            <label htmlFor="pl-color" className="form-label">
+              Display Color{" "}
+              <span className="text-muted fw-normal small">(optional)</span>
+            </label>
+            <div className="d-flex align-items-center gap-2">
+              <input
+                id="pl-color"
+                name="displayColor"
+                type="color"
+                className="form-control form-control-color"
+                value={form.displayColor || "#0d6efd"}
+                onChange={handleFormChange}
+                title="Choose display color"
+              />
+              <input
+                aria-label="Display color hex value"
+                name="displayColor"
+                type="text"
+                className={`form-control${formErrors.displayColor ? " is-invalid" : ""}`}
+                style={{ maxWidth: "130px" }}
+                value={form.displayColor}
+                onChange={handleFormChange}
+                pattern="^#[0-9a-fA-F]{6}$"
+                placeholder="#0d6efd (optional)"
+                aria-describedby={
+                  formErrors.displayColor ? "pl-color-error" : "pl-color-hint"
+                }
+                aria-invalid={formErrors.displayColor ? true : undefined}
+              />
+            </div>
+            {formErrors.displayColor ? (
+              <div id="pl-color-error" className="invalid-feedback d-block">
+                {formErrors.displayColor}
+              </div>
+            ) : (
+              <div id="pl-color-hint" className="form-text">
+                Used for badges in the quote builder. Leave blank for no color.
+              </div>
+            )}
+          </div>
 
-            <form
-              onSubmit={handleSubmit}
-              noValidate
-              aria-label={editingId ? "Edit product line" : "Add product line"}
+          <div className="d-flex gap-2 justify-content-end">
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={closeDrawer}
             >
-              {/* Name */}
-              <div className="mb-3">
-                <label htmlFor="pl-name" className="form-label">
-                  Name{" "}
-                  <span className="text-muted fw-normal small">(required)</span>
-                </label>
-                <input
-                  id="pl-name"
-                  name="name"
-                  type="text"
-                  className={`form-control${formErrors.name ? " is-invalid" : ""}`}
-                  value={form.name}
-                  onChange={handleFormChange}
-                  required
-                  aria-required="true"
-                  aria-describedby={
-                    formErrors.name ? "pl-name-error" : undefined
-                  }
-                  aria-invalid={formErrors.name ? true : undefined}
-                  placeholder="e.g. Care Management"
-                />
-                {formErrors.name && (
-                  <div id="pl-name-error" className="invalid-feedback">
-                    {formErrors.name}
-                  </div>
-                )}
-              </div>
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="btn btn-primary"
+              disabled={saving}
+              aria-busy={saving}
+            >
+              {saving
+                ? "Saving…"
+                : editingId
+                  ? "Save Changes"
+                  : "Create Product Line"}
+            </button>
+          </div>
+        </form>
+      </OffcanvasDrawer>
 
-              {/* Display Color */}
-              <div className="mb-3">
-                <label htmlFor="pl-color" className="form-label">
-                  Display Color{" "}
-                  <span className="text-muted fw-normal small">(optional)</span>
-                </label>
-                <div className="d-flex align-items-center gap-2">
-                  <input
-                    id="pl-color"
-                    name="displayColor"
-                    type="color"
-                    className="form-control form-control-color"
-                    value={form.displayColor || "#0d6efd"}
-                    onChange={handleFormChange}
-                    title="Choose display color"
-                  />
-                  <input
-                    aria-label="Display color hex value"
-                    name="displayColor"
-                    type="text"
-                    className={`form-control${formErrors.displayColor ? " is-invalid" : ""}`}
-                    style={{ maxWidth: "130px" }}
-                    value={form.displayColor}
-                    onChange={handleFormChange}
-                    pattern="^#[0-9a-fA-F]{6}$"
-                    placeholder="#0d6efd (optional)"
-                    aria-describedby={
-                      formErrors.displayColor
-                        ? "pl-color-error"
-                        : "pl-color-hint"
-                    }
-                    aria-invalid={formErrors.displayColor ? true : undefined}
-                  />
-                </div>
-                {formErrors.displayColor ? (
-                  <div id="pl-color-error" className="invalid-feedback d-block">
-                    {formErrors.displayColor}
-                  </div>
+      {/* ── View Drawer ── */}
+      <OffcanvasDrawer
+        open={viewOpen}
+        title={viewLine?.name ?? ""}
+        onClose={closeViewDrawer}
+      >
+        {viewLine && (
+          <>
+            <div className="d-flex gap-2 mb-4">
+              <button
+                className="btn btn-primary btn-sm"
+                onClick={() => {
+                  closeViewDrawer();
+                  openEditDrawer(viewLine);
+                }}
+              >
+                Edit
+              </button>
+              <button
+                className="btn btn-outline-danger btn-sm"
+                onClick={() => {
+                  closeViewDrawer();
+                  setDeleteTarget(viewLine);
+                }}
+              >
+                Delete
+              </button>
+            </div>
+            <dl className="row mb-0">
+              <dt className="col-5">Name</dt>
+              <dd className="col-7">{viewLine.name}</dd>
+              <dt className="col-5">Display Color</dt>
+              <dd className="col-7">
+                {viewLine.displayColor ? (
+                  <span className="d-flex align-items-center gap-2">
+                    <span
+                      style={{
+                        display: "inline-block",
+                        width: "1.25rem",
+                        height: "1.25rem",
+                        borderRadius: "50%",
+                        backgroundColor: viewLine.displayColor,
+                        border: "1px solid rgba(0,0,0,.2)",
+                      }}
+                      aria-hidden="true"
+                    />
+                    <code>{viewLine.displayColor}</code>
+                  </span>
                 ) : (
-                  <div id="pl-color-hint" className="form-text">
-                    Used for badges in the quote builder. Leave blank for no
-                    color.
-                  </div>
+                  <span className="text-muted fst-italic">None</span>
                 )}
-              </div>
-
-              <div className="d-flex gap-2">
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  disabled={saving}
-                >
-                  {saving
-                    ? editingId
-                      ? "Saving…"
-                      : "Adding…"
-                    : editingId
-                      ? "Save Changes"
-                      : "Add Product Line"}
-                </button>
-                {editingId && (
-                  <button
-                    type="button"
-                    className="btn btn-outline-secondary"
-                    onClick={resetForm}
-                  >
-                    Cancel
-                  </button>
-                )}
-              </div>
-            </form>
-          </section>
-        </div>
-      </div>
+              </dd>
+            </dl>
+          </>
+        )}
+      </OffcanvasDrawer>
 
       {/* ── Delete confirmation modal ── */}
       {deleteTarget && (

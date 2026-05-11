@@ -134,14 +134,14 @@ function SettingsForm() {
 
   if (loading) {
     return (
-      <div className="container py-4" aria-live="polite" aria-busy="true">
+      <div className="container-fluid py-4" aria-live="polite" aria-busy="true">
         <p>Loading settings…</p>
       </div>
     );
   }
 
   return (
-    <div className="container py-4">
+    <div className="container-fluid py-4">
       <h1 className="h3 mb-4">Company Settings</h1>
 
       <form

@@ -5,14 +5,16 @@
  *   - Blocks access for non-admin roles (e.g., sales_rep)
  *   - Renders empty-state message when no lines exist
  *   - Renders a table row for each loaded product line
- *   - Add form: shows inline error when name is empty
- *   - Add form: shows inline error for invalid hex color
- *   - Add form: clears error when user corrects the field
- *   - Add form: does not call the API when validation fails
- *   - Add form: shows success toast and adds row after successful create
- *   - Add form: shows error toast when create fails
- *   - Edit: pre-fills form when Edit button is clicked
- *   - Edit: shows success toast and updates row after successful save
+ *   - Add drawer: opens when "+ Add Product Line" is clicked
+ *   - Add drawer: shows inline error when name is empty
+ *   - Add drawer: shows inline error for invalid hex color
+ *   - Add drawer: clears error when user corrects the field
+ *   - Add drawer: does not call the API when validation fails
+ *   - Add drawer: shows success toast and adds row after successful create
+ *   - Add drawer: shows error toast when create fails
+ *   - Edit drawer: pre-fills form when Edit button is clicked
+ *   - Edit drawer: shows success toast and updates row after successful save
+ *   - View drawer: opens when product line name is clicked
  *   - Delete: opens confirmation modal when Delete button is clicked
  *   - Delete: calls deleteProductLine and removes row on confirm
  *   - Delete: shows error toast when delete fails (e.g., IN_USE)
@@ -117,70 +119,93 @@ describe("rendering", () => {
   });
 });
 
-// ─── Add form validation ───────────────────────────────────────────────────────
-describe("add form validation", () => {
+// ─── Add drawer ───────────────────────────────────────────────────────────────
+describe("add drawer", () => {
+  async function openAddDrawer(user) {
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: /\+ add product line/i }),
+      ).toBeInTheDocument(),
+    );
+    await user.click(
+      screen.getByRole("button", { name: /\+ add product line/i }),
+    );
+    return screen.getByRole("dialog", { name: /add product line/i });
+  }
+
+  it("opens when '+ Add Product Line' is clicked", async () => {
+    const user = userEvent.setup();
+    renderPage();
+    const dialog = await openAddDrawer(user);
+    expect(dialog).toBeInTheDocument();
+  });
+
   it("shows inline error when name is empty on submit", async () => {
     const user = userEvent.setup();
     renderPage();
-    await waitFor(() =>
-      screen.getByRole("heading", { name: /product line management/i }),
+    const dialog = await openAddDrawer(user);
+    const form = within(dialog).getByRole("form", {
+      name: /add product line/i,
+    });
+    await user.click(
+      within(form).getByRole("button", { name: /create product line/i }),
     );
-
-    await user.click(screen.getByRole("button", { name: /add product line/i }));
-
-    expect(screen.getByText(/name is required/i)).toBeInTheDocument();
+    expect(within(form).getByText(/name is required/i)).toBeInTheDocument();
   });
 
   it("shows inline error for invalid hex color", async () => {
     const user = userEvent.setup();
     renderPage();
-    await waitFor(() =>
-      screen.getByRole("heading", { name: /product line management/i }),
-    );
+    const dialog = await openAddDrawer(user);
+    const form = within(dialog).getByRole("form", {
+      name: /add product line/i,
+    });
 
-    const nameInput = screen.getByLabelText(/^name/i);
-    await user.type(nameInput, "New Line");
-
-    const hexInput = screen.getByRole("textbox", {
+    await user.type(within(form).getByLabelText(/^name/i), "New Line");
+    const hexInput = within(form).getByRole("textbox", {
       name: /display color hex/i,
     });
     await user.clear(hexInput);
     await user.type(hexInput, "badcolor");
+    await user.click(
+      within(form).getByRole("button", { name: /create product line/i }),
+    );
 
-    await user.click(screen.getByRole("button", { name: /add product line/i }));
-
-    expect(screen.getByText(/valid 6-digit hex/i)).toBeInTheDocument();
+    expect(within(form).getByText(/valid 6-digit hex/i)).toBeInTheDocument();
   });
 
   it("clears name error when user starts typing", async () => {
     const user = userEvent.setup();
     renderPage();
-    await waitFor(() =>
-      screen.getByRole("heading", { name: /product line management/i }),
+    const dialog = await openAddDrawer(user);
+    const form = within(dialog).getByRole("form", {
+      name: /add product line/i,
+    });
+
+    await user.click(
+      within(form).getByRole("button", { name: /create product line/i }),
     );
+    expect(within(form).getByText(/name is required/i)).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: /add product line/i }));
-    expect(screen.getByText(/name is required/i)).toBeInTheDocument();
-
-    const nameInput = screen.getByLabelText(/^name/i);
-    await user.type(nameInput, "F");
-    expect(screen.queryByText(/name is required/i)).not.toBeInTheDocument();
+    await user.type(within(form).getByLabelText(/^name/i), "F");
+    expect(
+      within(form).queryByText(/name is required/i),
+    ).not.toBeInTheDocument();
   });
 
   it("does not call createProductLine when validation fails", async () => {
     const user = userEvent.setup();
     renderPage();
-    await waitFor(() =>
-      screen.getByRole("heading", { name: /product line management/i }),
+    const dialog = await openAddDrawer(user);
+    const form = within(dialog).getByRole("form", {
+      name: /add product line/i,
+    });
+    await user.click(
+      within(form).getByRole("button", { name: /create product line/i }),
     );
-
-    await user.click(screen.getByRole("button", { name: /add product line/i }));
     expect(createProductLine).not.toHaveBeenCalled();
   });
-});
 
-// ─── Add form success / failure ───────────────────────────────────────────────
-describe("add form API interactions", () => {
   it("shows success toast and adds row on successful create", async () => {
     const user = userEvent.setup();
     const newLine = {
@@ -192,13 +217,15 @@ describe("add form API interactions", () => {
     createProductLine.mockResolvedValue(newLine);
 
     renderPage();
-    await waitFor(() =>
-      screen.getByRole("heading", { name: /product line management/i }),
-    );
+    const dialog = await openAddDrawer(user);
+    const form = within(dialog).getByRole("form", {
+      name: /add product line/i,
+    });
 
-    const nameInput = screen.getByLabelText(/^name/i);
-    await user.type(nameInput, "Mental Health");
-    await user.click(screen.getByRole("button", { name: /add product line/i }));
+    await user.type(within(form).getByLabelText(/^name/i), "Mental Health");
+    await user.click(
+      within(form).getByRole("button", { name: /create product line/i }),
+    );
 
     await waitFor(() => {
       expect(createProductLine).toHaveBeenCalledWith(
@@ -216,13 +243,15 @@ describe("add form API interactions", () => {
     });
 
     renderPage();
-    await waitFor(() =>
-      screen.getByRole("heading", { name: /product line management/i }),
-    );
+    const dialog = await openAddDrawer(user);
+    const form = within(dialog).getByRole("form", {
+      name: /add product line/i,
+    });
 
-    const nameInput = screen.getByLabelText(/^name/i);
-    await user.type(nameInput, "Duplicate");
-    await user.click(screen.getByRole("button", { name: /add product line/i }));
+    await user.type(within(form).getByLabelText(/^name/i), "Duplicate");
+    await user.click(
+      within(form).getByRole("button", { name: /create product line/i }),
+    );
 
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith("Name already exists.");
@@ -230,22 +259,22 @@ describe("add form API interactions", () => {
   });
 });
 
-// ─── Edit ─────────────────────────────────────────────────────────────────────
-describe("edit flow", () => {
+// ─── Edit drawer ──────────────────────────────────────────────────────────────
+describe("edit drawer", () => {
   it("pre-fills form when Edit is clicked", async () => {
     const user = userEvent.setup();
     renderPage();
     await waitFor(() => screen.getByText("Care Management"));
 
-    const editBtn = screen.getByRole("button", {
-      name: /edit care management/i,
-    });
-    await user.click(editBtn);
+    await user.click(
+      screen.getByRole("button", { name: /edit care management/i }),
+    );
 
-    expect(screen.getByLabelText(/^name/i)).toHaveValue("Care Management");
-    expect(
-      screen.getByRole("heading", { name: /edit product line/i }),
-    ).toBeInTheDocument();
+    const dialog = screen.getByRole("dialog", { name: /edit product line/i });
+    expect(dialog).toBeInTheDocument();
+    expect(within(dialog).getByLabelText(/^name/i)).toHaveValue(
+      "Care Management",
+    );
   });
 
   it("shows success toast and updates row after save", async () => {
@@ -260,16 +289,36 @@ describe("edit flow", () => {
       screen.getByRole("button", { name: /edit care management/i }),
     );
 
-    const nameInput = screen.getByLabelText(/^name/i);
+    const dialog = screen.getByRole("dialog", { name: /edit product line/i });
+    const nameInput = within(dialog).getByLabelText(/^name/i);
     await user.clear(nameInput);
     await user.type(nameInput, "Renamed Line");
 
-    await user.click(screen.getByRole("button", { name: /save changes/i }));
+    await user.click(
+      within(dialog).getByRole("button", { name: /save changes/i }),
+    );
 
     await waitFor(() => {
       expect(toast.success).toHaveBeenCalledWith("Product line updated.");
       expect(screen.getByText("Renamed Line")).toBeInTheDocument();
     });
+  });
+});
+
+// ─── View drawer ──────────────────────────────────────────────────────────────
+describe("view drawer", () => {
+  it("opens when product line name is clicked", async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await waitFor(() => screen.getByText("Care Management"));
+
+    await user.click(
+      screen.getByRole("button", { name: /view details for care management/i }),
+    );
+
+    const dialog = screen.getByRole("dialog", { name: /care management/i });
+    expect(dialog).toBeInTheDocument();
+    expect(within(dialog).getByText("#198754")).toBeInTheDocument();
   });
 });
 
@@ -338,7 +387,6 @@ describe("reorder", () => {
   it("calls reorderProductLine with 'down' and refreshes", async () => {
     const user = userEvent.setup();
     reorderProductLine.mockResolvedValue({});
-    // Re-fetch returns same list (order already updated on server)
     getProductLines.mockResolvedValue([...SAMPLE_LINES]);
 
     renderPage();
@@ -350,7 +398,7 @@ describe("reorder", () => {
 
     await waitFor(() => {
       expect(reorderProductLine).toHaveBeenCalledWith("line-1", "down");
-      expect(getProductLines).toHaveBeenCalledTimes(2); // initial load + refresh
+      expect(getProductLines).toHaveBeenCalledTimes(2);
     });
   });
 
