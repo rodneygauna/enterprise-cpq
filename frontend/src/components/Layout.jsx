@@ -65,19 +65,34 @@ export default function Layout() {
                 </li>
 
                 {["admin", "super_admin"].includes(user?.role) && (
-                  <li className="nav-item">
-                    <NavLink
-                      to="/admin/product-lines"
-                      className={({ isActive }) =>
-                        "nav-link" + (isActive ? " active" : "")
-                      }
-                      aria-current={({ isActive }) =>
-                        isActive ? "page" : undefined
-                      }
-                    >
-                      Product Lines
-                    </NavLink>
-                  </li>
+                  <>
+                    <li className="nav-item">
+                      <NavLink
+                        to="/admin/product-lines"
+                        className={({ isActive }) =>
+                          "nav-link" + (isActive ? " active" : "")
+                        }
+                        aria-current={({ isActive }) =>
+                          isActive ? "page" : undefined
+                        }
+                      >
+                        Product Lines
+                      </NavLink>
+                    </li>
+                    <li className="nav-item">
+                      <NavLink
+                        to="/admin/products"
+                        className={({ isActive }) =>
+                          "nav-link" + (isActive ? " active" : "")
+                        }
+                        aria-current={({ isActive }) =>
+                          isActive ? "page" : undefined
+                        }
+                      >
+                        Products
+                      </NavLink>
+                    </li>
+                  </>
                 )}
 
                 {user?.role === "super_admin" && (

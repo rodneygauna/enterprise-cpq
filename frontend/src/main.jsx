@@ -12,6 +12,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Settings from "./pages/Settings";
 import ProductLines from "./pages/ProductLines";
+import Products from "./pages/Products";
 
 import "bootstrap/dist/css/bootstrap.min.css";
 import { ToastContainer } from "react-toastify";
@@ -44,6 +45,7 @@ const router = createBrowserRouter(
         },
         { path: "settings", element: <Settings /> },
         { path: "admin/product-lines", element: <ProductLines /> },
+        { path: "admin/products", element: <Products /> },
       ],
     },
   ],
