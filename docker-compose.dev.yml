@@ -1,0 +1,41 @@
+# Development override — mount source for hot-reload, expose ports directly.
+# Vite dev server proxies /api → localhost:3001; Caddy is not used in dev.
+#
+# Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+# Or:    make dev
+
+services:
+  mongodb:
+    restart: "no"
+    ports:
+      - "27017:27017"
+
+  api:
+    restart: "no"
+    build:
+      context: ./backend
+      target: dev
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: development
+    command: npx nodemon src/server.js
+
+  # Vite dev server with HMR — replaces Caddy in development
+  frontend:
+    restart: "no"
+    build:
+      context: ./frontend
+      target: dev
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+    environment:
+      NODE_ENV: development
+      API_HOST: api
+    command: npm run dev -- --host

@@ -1,0 +1,15 @@
+{$DOMAIN} {
+    encode gzip
+
+    # Route all /api requests to the Express backend
+    handle /api/* {
+        reverse_proxy api:3001
+    }
+
+    # Serve the React SPA with HTML5 history fallback for client-side routing
+    handle {
+        root * /srv
+        try_files {path} /index.html
+        file_server
+    }
+}
