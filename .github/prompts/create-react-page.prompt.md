@@ -34,6 +34,7 @@ export default function <PageName>() {
   );
 
   if (error) return (
+    // Inline alert is appropriate here — the page cannot render without this data
     <div className="alert alert-danger" role="alert">{error}</div>
   );
 
@@ -82,10 +83,18 @@ Add a `<NavLink>` to the sidebar or navbar in the appropriate layout component:
 ## Rules to Follow
 
 1. Always render a loading state while fetching
-2. Always render an error state if the API call fails
-3. Use `<main id="main-content">` as the root element for the page content
-4. Use `<h1>` for the page title — only one `<h1>` per page
-5. Use Bootstrap layout classes (`container-fluid`, `row`, `col-*`) for layout — not custom CSS
-6. Never hardcode colors — use Bootstrap utility classes and CSS custom properties
-7. Wrap admin-only sections in `<RequireRole>` — never rely on the backend alone for hiding UI
-8. Check [accessibility.instructions.md](../instructions/accessibility.instructions.md) before finalizing
+2. Always render an inline `alert alert-danger` if the **initial page load** fails (nothing to show)
+3. Use `toast.success()` / `toast.error()` from `react-toastify` for **mutation feedback** (save, create, update, delete) — never inline alerts for those
+4. Use `<main id="main-content">` as the root element for the page content
+5. Never add a `<ToastContainer>` to individual pages — it is mounted once in `src/main.jsx`
+6. Use `<h1>` for the page title — only one `<h1>` per page
+7. Use Bootstrap layout classes (`container-fluid`, `row`, `col-*`) for layout — not custom CSS
+8. Never hardcode colors — use Bootstrap utility classes and CSS custom properties
+9. Wrap admin-only sections in `<RequireRole>` — never rely on the backend alone for hiding UI
+10. **If the page contains a form:**
+    - Add `noValidate` to `<form>`
+    - Validate all required/format-constrained fields on submit before calling the API — use the pattern in [frontend.instructions.md](../instructions/frontend.instructions.md)
+    - Mark required fields with `aria-required="true"` and a `<span className="text-muted fw-normal small">(required)</span>` in the label
+    - Use `is-invalid` + `<div class="invalid-feedback">` for field errors; clear each error when the user corrects the field
+    - Put `validate()` and any regex constants at **module scope** (outside the component)
+11. Check [accessibility.instructions.md](../instructions/accessibility.instructions.md) before finalizing

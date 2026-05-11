@@ -95,6 +95,43 @@ it("renders product list from API", async () => {
 
 ---
 
+## Mocking `react-toastify`
+
+When a component uses `toast.success()` or `toast.error()`, mock the module and assert on the call:
+
+```js
+vi.mock("react-toastify", () => ({
+  toast: { success: vi.fn(), error: vi.fn() },
+}));
+import { toast } from "react-toastify";
+
+it("shows a success toast after save", async () => {
+  updateResource.mockResolvedValue({ name: "Updated" });
+  render(<MyPage />);
+
+  await userEvent.click(screen.getByRole("button", { name: /save/i }));
+
+  await waitFor(() =>
+    expect(toast.success).toHaveBeenCalledWith("Saved successfully."),
+  );
+});
+
+it("shows an error toast when save fails", async () => {
+  updateResource.mockRejectedValue({
+    response: { data: { error: "Forbidden" } },
+  });
+  render(<MyPage />);
+
+  await userEvent.click(screen.getByRole("button", { name: /save/i }));
+
+  await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Forbidden"));
+});
+```
+
+Do **not** query for the toast DOM element — `ToastContainer` is not rendered in the test environment.
+
+---
+
 ## Mocking `useAuth`
 
 ```js
@@ -169,10 +206,16 @@ describe("ProductForm", () => {
 
 - Renders correctly with expected content visible
 - Role-based UI: admin-only controls hidden for `sales_rep`
-- Form validation: required field errors shown on submit
+- Form validation: required field errors shown on submit; `aria-invalid` set on the invalid input
+- **API not called when client-side validation fails** — assert `expect(apiMock).not.toHaveBeenCalled()`
+- Error cleared when user corrects the field (type into field → error disappears)
+- **API not called when client-side validation fails** — assert `expect(apiMock).not.toHaveBeenCalled()`
+- Error cleared when user corrects the field (type into field → error disappears)
 - Form submit: calls API with correct data
 - Loading state: spinner or skeleton visible while fetching
-- Error state: error message visible on API failure
+- Initial load error: inline `alert-danger` visible on data fetch failure
+- Mutation success: `toast.success` called with the correct message
+- Mutation error: `toast.error` called with the correct message (including the fallback)
 
 ### Hooks (`useQuote`, `useAuth`)
 

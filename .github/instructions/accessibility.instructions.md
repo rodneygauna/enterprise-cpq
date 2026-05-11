@@ -89,6 +89,24 @@ Every form input must have an associated `<label>`:
 <input type="text" placeholder="Client Name" />
 ```
 
+Required fields must be marked both visually and programmatically. Use explicit `(required)` text in the label — this is self-explanatory without needing a form-level legend and is recommended by W3C WAI, the UK Government Design System, and Nielsen Norman Group. Combine with `aria-required="true"` on the input:
+
+```jsx
+<label htmlFor="companyName" className="form-label">
+  Company Name <span className="text-muted fw-normal small">(required)</span>
+</label>
+<input
+  id="companyName"
+  type="text"
+  aria-required="true"
+  required
+/>
+```
+
+Do **not** use an asterisk (`*`) as the sole required indicator — it requires a form-level legend to be WCAG 3.3.2 compliant and is not universally understood.
+
+> **Tip:** If most fields in a form are required, mark the _optional_ ones instead with `<span className="text-muted fw-normal small">(optional)</span>` — this reduces visual noise while still meeting 3.3.2.
+
 Validation error messages must be programmatically linked:
 
 ```jsx

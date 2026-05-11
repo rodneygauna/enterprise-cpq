@@ -197,6 +197,107 @@ const { user } = useAuth();
 
 ---
 
+## Form Validation Pattern
+
+Validate on submit before calling the API. Keep the `validate` function and any regex constants at **module scope** (outside the component) so the build tool does not misparse them inside JSX.
+
+```jsx
+const NAME_RE = /^.+$/; // replace with appropriate rule
+const HEX_RE = /^#[0-9a-fA-F]{6}$/;
+
+function validate(values) {
+  const errors = {};
+  if (!values.name.trim()) errors.name = "Name is required.";
+  if (values.color && !HEX_RE.test(values.color))
+    errors.color = "Must be a valid 6-digit hex color (e.g. #0d6efd).";
+  return errors;
+}
+
+function MyForm() {
+  const [form, setForm] = useState({ name: "", color: "" });
+  const [formErrors, setFormErrors] = useState({});
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+    // Clear the error for the field as soon as the user starts correcting it
+    if (formErrors[name]) setFormErrors((prev) => ({ ...prev, [name]: "" }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const errors = validate(form);
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors); // show inline errors, do NOT call the API
+      return;
+    }
+    setFormErrors({});
+    // ... API call
+  };
+
+  return (
+    <form onSubmit={handleSubmit} noValidate>
+      <div className="mb-3">
+        <label htmlFor="name" className="form-label">
+          Name <span className="text-muted fw-normal small">(required)</span>
+        </label>
+        <input
+          id="name"
+          name="name"
+          type="text"
+          className={`form-control${formErrors.name ? " is-invalid" : ""}`}
+          value={form.name}
+          onChange={handleChange}
+          required
+          aria-required="true"
+          aria-describedby={formErrors.name ? "name-error" : undefined}
+          aria-invalid={formErrors.name ? true : undefined}
+        />
+        {formErrors.name && (
+          <div id="name-error" className="invalid-feedback">
+            {formErrors.name}
+          </div>
+        )}
+      </div>
+    </form>
+  );
+}
+```
+
+**Rules:**
+
+- Always use `noValidate` on `<form>` — suppress browser native validation bubbles in favour of the inline pattern above
+  - Mark required fields with `aria-required="true"` and `<span className="text-muted fw-normal small">(required)</span>` in the label
+- Use Bootstrap `is-invalid` class + `<div class="invalid-feedback">` for field-level errors
+- Color-picker text inputs that sit outside a normal `<div class="mb-3">` need `invalid-feedback d-block` to display outside the flex row
+- Regex / pure helper constants belong at **module scope**, not inside the component or render function
+
+---
+
+## User Feedback — Toasts vs Inline Alerts
+
+Use **react-toastify** for transient success/error feedback on mutations (save, create, update, delete):
+
+```jsx
+import { toast } from "react-toastify";
+
+async function handleSubmit(e) {
+  e.preventDefault();
+  try {
+    await updateSettings(formData);
+    toast.success("Settings saved successfully.");
+  } catch (err) {
+    toast.error(err.response?.data?.error ?? "Failed to save settings.");
+  }
+}
+```
+
+Use an **inline alert** (Bootstrap `alert-danger` with `role="alert"`) only for errors that block the entire page from rendering (e.g. failed initial data load where there is nothing to show).
+
+The `<ToastContainer>` is mounted once in `src/main.jsx` — never add it to individual pages.
+
+---
+
 ## Key Conventions
 
 - Page components live in `src/pages/` and are responsible for data fetching and layout
