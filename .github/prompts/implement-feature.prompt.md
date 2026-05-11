@@ -65,6 +65,11 @@ Follow [frontend.instructions.md](../instructions/frontend.instructions.md) and 
 - [ ] Add nav links to the appropriate layout component
 - [ ] Wrap admin/role-restricted pages in `<RequireRole>`
 - [ ] Add pricing calculation helpers to `frontend/src/utils/pricing.js` if needed (mirror of backend)
+- [ ] **For any create / read / update UI:** use `<OffcanvasDrawer>` from `src/components/OffcanvasDrawer.jsx`
+  - View drawer: record name is a `btn-link` that opens the drawer; admin actions (Edit/Delete) are at the top of the body above the detail `<dl>`
+  - Add / Edit drawer: form lives inside the drawer with Cancel + Submit buttons at the bottom right
+  - Delete confirmation uses a centered Bootstrap `modal`, not the offcanvas
+  - Follow the exact state and helper function naming from [frontend.instructions.md](../instructions/frontend.instructions.md)
 
 ---
 

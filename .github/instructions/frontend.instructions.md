@@ -274,7 +274,167 @@ function MyForm() {
 
 ---
 
-## User Feedback — Toasts vs Inline Alerts
+## OffcanvasDrawer — View / Add / Edit Pattern
+
+All view, add, and edit operations **must** use the shared `OffcanvasDrawer` component (`src/components/OffcanvasDrawer.jsx`) instead of inline forms, modals, or custom slide-out markup.
+
+### Component API
+
+```jsx
+import OffcanvasDrawer from "../components/OffcanvasDrawer";
+
+<OffcanvasDrawer
+  open={boolean} // controls mount + CSS enter/exit animation
+  title="Add Product Line" // used as dialog aria-label and heading text
+  onClose={fn} // called by the close button and backdrop click
+  width="min(520px, 95vw)" // optional — this is the default
+>
+  {/* drawer body content */}
+</OffcanvasDrawer>;
+```
+
+The component manages its own `mounted`/`show` state so the caller never needs `setTimeout` or `requestAnimationFrame`.
+
+### Required State Pattern
+
+Every page that uses the drawer needs these pieces of state:
+
+```jsx
+// Edit / Add drawer
+const [drawerOpen, setDrawerOpen] = useState(false);
+const [editingId, setEditingId] = useState(null); // null = add mode
+
+// View drawer
+const [viewItem, setViewItem] = useState(null);
+const [viewOpen, setViewOpen] = useState(false);
+```
+
+And these helpers:
+
+```jsx
+function openAddDrawer() {
+  setEditingId(null);
+  setForm({ ...EMPTY_FORM });
+  setFormErrors({});
+  setDrawerOpen(true);
+}
+
+function openEditDrawer(item) {
+  setEditingId(item._id);
+  setForm(itemToForm(item));
+  setFormErrors({});
+  setDrawerOpen(true);
+}
+
+function closeDrawer() {
+  setDrawerOpen(false);
+  setFormErrors({});
+}
+
+function openViewDrawer(item) {
+  setViewItem(item);
+  setViewOpen(true);
+}
+
+function closeViewDrawer() {
+  setViewOpen(false);
+}
+```
+
+### Table Row Pattern
+
+The record **name** is always a `btn-link` that opens the view drawer. Edit / Delete action buttons remain as separate columns or inside the view drawer header area.
+
+```jsx
+<td>
+  <button
+    className="btn btn-link p-0 text-start fw-semibold"
+    onClick={() => openViewDrawer(item)}
+    aria-label={`View details for ${item.name}`}
+  >
+    {item.name}
+  </button>
+</td>
+```
+
+### View Drawer Content Pattern
+
+Place admin action buttons (Edit / Delete) **above** the detail list, not below it:
+
+```jsx
+<OffcanvasDrawer
+  open={viewOpen}
+  title={viewItem?.name ?? ""}
+  onClose={closeViewDrawer}
+>
+  {viewItem && (
+    <>
+      {isAdmin && (
+        <div className="d-flex gap-2 mb-4">
+          <button
+            className="btn btn-primary btn-sm"
+            onClick={() => {
+              closeViewDrawer();
+              openEditDrawer(viewItem);
+            }}
+          >
+            Edit
+          </button>
+          <button
+            className="btn btn-outline-danger btn-sm"
+            onClick={() => {
+              closeViewDrawer();
+              setDeleteTarget(viewItem);
+            }}
+          >
+            Delete
+          </button>
+        </div>
+      )}
+      <dl className="row mb-0">{/* detail rows */}</dl>
+    </>
+  )}
+</OffcanvasDrawer>
+```
+
+### Add / Edit Drawer Content Pattern
+
+```jsx
+<OffcanvasDrawer
+  open={drawerOpen}
+  title={editingId ? "Edit Product Line" : "Add Product Line"}
+  onClose={closeDrawer}
+>
+  <form
+    onSubmit={handleSubmit}
+    noValidate
+    aria-label={editingId ? "Edit product line" : "Add product line"}
+  >
+    {/* fields */}
+    <div className="d-flex gap-2 justify-content-end">
+      <button type="button" className="btn btn-secondary" onClick={closeDrawer}>
+        Cancel
+      </button>
+      <button type="submit" className="btn btn-primary" disabled={saving}>
+        {saving
+          ? "Saving…"
+          : editingId
+            ? "Save Changes"
+            : "Create Product Line"}
+      </button>
+    </div>
+  </form>
+</OffcanvasDrawer>
+```
+
+### Rules
+
+- **Never** use an inline `<div class="col-*">` right-column form for add/edit — always use the drawer
+- **Never** re-implement the backdrop, animation, or close button — these live in `OffcanvasDrawer`
+- The `title` prop is required and must be a meaningful string (used as the accessible dialog label)
+- Delete confirmation still uses a centered Bootstrap `modal` — the offcanvas is for create/read/update only
+
+---
 
 Use **react-toastify** for transient success/error feedback on mutations (save, create, update, delete):
 
