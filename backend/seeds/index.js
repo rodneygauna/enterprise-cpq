@@ -2,7 +2,9 @@ require("dotenv").config();
 const mongoose = require("mongoose");
 
 const User = require("../src/models/User");
+const ProductLine = require("../src/models/ProductLine");
 const seedUsers = require("./users");
+const seedProductLines = require("./productLines");
 
 async function seed() {
   const { MONGO_HOST, MONGO_USER, MONGO_PASS, MONGO_DATABASE } = process.env;
@@ -19,6 +21,7 @@ async function seed() {
   console.log("Connected. Running seeds...\n");
 
   await seedUsers(User);
+  await seedProductLines(ProductLine);
 
   console.log("\nSeeding complete.");
   await mongoose.disconnect();
