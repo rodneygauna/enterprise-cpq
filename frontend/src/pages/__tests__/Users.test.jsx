@@ -483,8 +483,29 @@ describe("invite drawer", () => {
       within(dialog).getByRole("button", { name: /send invitation/i }),
     );
     await waitFor(() => {
-      expect(inviteUser).toHaveBeenCalledWith("new@example.com");
+      expect(inviteUser).toHaveBeenCalledWith("new@example.com", "sales_rep");
       expect(toast.success).toHaveBeenCalled();
+    });
+  });
+
+  it("passes the selected role to inviteUser", async () => {
+    inviteUser.mockResolvedValue({ email: "exec@example.com" });
+    const user = userEvent.setup();
+    renderPage();
+    const dialog = await openInviteDrawer(user);
+    await user.type(
+      within(dialog).getByLabelText(/email address/i),
+      "exec@example.com",
+    );
+    await user.selectOptions(
+      within(dialog).getByLabelText(/^role$/i),
+      "executive",
+    );
+    await user.click(
+      within(dialog).getByRole("button", { name: /send invitation/i }),
+    );
+    await waitFor(() => {
+      expect(inviteUser).toHaveBeenCalledWith("exec@example.com", "executive");
     });
   });
 

@@ -100,6 +100,7 @@ function UsersPanel() {
   // ── Invite drawer ──────────────────────────────────────────────────────────
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteRole, setInviteRole] = useState("sales_rep");
   const [inviteEmailError, setInviteEmailError] = useState("");
   const [inviting, setInviting] = useState(false);
 
@@ -217,6 +218,7 @@ function UsersPanel() {
   // ── Invite ─────────────────────────────────────────────────────────────────
   function openInvite() {
     setInviteEmail("");
+    setInviteRole("sales_rep");
     setInviteEmailError("");
     setInviteOpen(true);
   }
@@ -241,7 +243,7 @@ function UsersPanel() {
 
     setInviting(true);
     try {
-      await inviteUser(trimmed);
+      await inviteUser(trimmed, inviteRole);
       toast.success(`Invitation sent to ${trimmed}.`);
       setInviteOpen(false);
       loadUsers(appliedFilters, 1);
@@ -713,6 +715,24 @@ function UsersPanel() {
                 {inviteEmailError}
               </div>
             )}
+          </div>
+
+          <div className="mb-3">
+            <label className="form-label" htmlFor="inviteRole">
+              Role
+            </label>
+            <select
+              id="inviteRole"
+              className="form-select"
+              value={inviteRole}
+              onChange={(e) => setInviteRole(e.target.value)}
+            >
+              <option value="sales_rep">Sales Rep</option>
+              <option value="sales_manager">Sales Manager</option>
+              <option value="executive">Executive</option>
+              <option value="admin">Admin</option>
+              <option value="super_admin">Super Admin</option>
+            </select>
           </div>
 
           <div className="d-flex justify-content-end gap-2 mt-4">

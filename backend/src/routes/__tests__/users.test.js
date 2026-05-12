@@ -430,6 +430,26 @@ describe("POST /api/users/invite", () => {
     expect(created.inviteToken).toBeTruthy();
   });
 
+  it("returns 201 and assigns the specified role to the pending user", async () => {
+    const admin = await createUser("admin");
+    const res = await request(app)
+      .post("/api/users/invite")
+      .set(cookie("admin", admin._id.toString()))
+      .send({ email: "invite-exec@example.com", role: "executive" });
+    expect(res.status).toBe(201);
+    const created = await User.findOne({ email: "invite-exec@example.com" });
+    expect(created.role).toBe("executive");
+  });
+
+  it("returns 422 for an invalid role value", async () => {
+    const admin = await createUser("admin");
+    const res = await request(app)
+      .post("/api/users/invite")
+      .set(cookie("admin", admin._id.toString()))
+      .send({ email: "invite-bad@example.com", role: "god" });
+    expect(res.status).toBe(422);
+  });
+
   it("returns 201 and refreshes token for pending (not yet accepted) user", async () => {
     const admin = await createUser("admin");
     // First invite

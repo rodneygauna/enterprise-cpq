@@ -83,4 +83,32 @@ async function resetPassword(rawToken, newPassword) {
   await user.save();
 }
 
-module.exports = { registerUser, forgotPassword, resetPassword };
+/**
+ * Accepts a pending invitation: validates the raw token, sets the user's
+ * password + name, and activates the account.
+ * Throws 400 when the token is invalid or expired.
+ */
+async function acceptInvite(rawToken, { password, firstName, lastName }) {
+  const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
+
+  const user = await User.findOne({
+    inviteToken: tokenHash,
+    inviteExpires: { $gt: new Date() },
+  });
+
+  if (!user) {
+    throw new AppError("Invalid or expired invitation link", 400);
+  }
+
+  user.passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
+  user.firstName = firstName.trim();
+  user.lastName = lastName.trim();
+  user.isActive = true;
+  user.inviteToken = null;
+  user.inviteExpires = null;
+
+  await user.save();
+  return user;
+}
+
+module.exports = { registerUser, forgotPassword, resetPassword, acceptInvite };

@@ -131,11 +131,15 @@ router.post(
       .isEmail()
       .normalizeEmail()
       .withMessage("A valid email address is required"),
+    body("role")
+      .optional()
+      .isIn(["super_admin", "admin", "executive", "sales_manager", "sales_rep"])
+      .withMessage("Invalid role"),
   ],
   validate,
   async (req, res, next) => {
     try {
-      const pending = await inviteUser(req.body.email, req.user);
+      const pending = await inviteUser(req.body.email, req.user, req.body.role);
       res.status(201).json({ data: pending, error: null, meta: null });
     } catch (err) {
       next(err);

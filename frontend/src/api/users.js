@@ -11,5 +11,5 @@ export const updateUserRole = (id, role) =>
 export const updateUserStatus = (id, isActive) =>
   api.patch(`/users/${id}/status`, { isActive }).then((r) => r.data.data);
 
-export const inviteUser = (email) =>
-  api.post("/users/invite", { email }).then((r) => r.data.data);
+export const inviteUser = (email, role) =>
+  api.post("/users/invite", { email, role }).then((r) => r.data.data);

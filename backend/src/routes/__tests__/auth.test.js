@@ -467,3 +467,161 @@ describe("POST /api/auth/reset-password", () => {
     expect(res.status).toBe(422);
   });
 });
+
+// ─── POST /api/auth/accept-invite ─────────────────────────────────────────────
+describe("POST /api/auth/accept-invite", () => {
+  async function setupInvite(overrides = {}) {
+    const rawToken = "valid-invite-token-abc";
+    const tokenHash = crypto
+      .createHash("sha256")
+      .update(rawToken)
+      .digest("hex");
+
+    const user = await User.create({
+      email: "invited@example.com",
+      passwordHash: null,
+      firstName: "Pending",
+      lastName: "User",
+      role: "sales_rep",
+      isActive: false,
+      inviteToken: tokenHash,
+      inviteExpires: new Date(Date.now() + 24 * 60 * 60 * 1000),
+      ...overrides,
+    });
+
+    return { rawToken, tokenHash, user };
+  }
+
+  it("activates the account and returns 200 with user data", async () => {
+    const { rawToken } = await setupInvite();
+
+    const res = await request(app).post("/api/auth/accept-invite").send({
+      token: rawToken,
+      password: "NewPassword1!",
+      firstName: "Jane",
+      lastName: "Doe",
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.email).toBe("invited@example.com");
+
+    const saved = await User.findOne({ email: "invited@example.com" });
+    expect(saved.isActive).toBe(true);
+    expect(saved.inviteToken).toBeNull();
+  });
+
+  it("sets the provided first and last name on the account", async () => {
+    const { rawToken } = await setupInvite();
+
+    await request(app).post("/api/auth/accept-invite").send({
+      token: rawToken,
+      password: "NewPassword1!",
+      firstName: "Jane",
+      lastName: "Doe",
+    });
+
+    const saved = await User.findOne({ email: "invited@example.com" });
+    expect(saved.firstName).toBe("Jane");
+    expect(saved.lastName).toBe("Doe");
+  });
+
+  it("sets JWT cookies so the user is logged in after accepting", async () => {
+    const { rawToken } = await setupInvite();
+
+    const res = await request(app).post("/api/auth/accept-invite").send({
+      token: rawToken,
+      password: "NewPassword1!",
+      firstName: "Jane",
+      lastName: "Doe",
+    });
+
+    const cookies = res.headers["set-cookie"] ?? [];
+    expect(cookies.some((c) => c.startsWith("access_token="))).toBe(true);
+  });
+
+  it("returns 400 for an invalid token", async () => {
+    await setupInvite();
+
+    const res = await request(app).post("/api/auth/accept-invite").send({
+      token: "wrong-token",
+      password: "NewPassword1!",
+      firstName: "Jane",
+      lastName: "Doe",
+    });
+
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 400 for an expired invite", async () => {
+    const rawToken = "expired-invite-token";
+    const tokenHash = crypto
+      .createHash("sha256")
+      .update(rawToken)
+      .digest("hex");
+
+    await User.create({
+      email: "expired@example.com",
+      passwordHash: null,
+      firstName: "Pending",
+      lastName: "User",
+      role: "sales_rep",
+      isActive: false,
+      inviteToken: tokenHash,
+      inviteExpires: new Date(Date.now() - 1000), // already expired
+    });
+
+    const res = await request(app).post("/api/auth/accept-invite").send({
+      token: rawToken,
+      password: "NewPassword1!",
+      firstName: "Jane",
+      lastName: "Doe",
+    });
+
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 400 when the token has already been used", async () => {
+    const { rawToken } = await setupInvite();
+
+    // First use — should succeed
+    await request(app).post("/api/auth/accept-invite").send({
+      token: rawToken,
+      password: "NewPassword1!",
+      firstName: "Jane",
+      lastName: "Doe",
+    });
+
+    // Second use — token was cleared
+    const res = await request(app).post("/api/auth/accept-invite").send({
+      token: rawToken,
+      password: "AnotherPass2!",
+      firstName: "Jane",
+      lastName: "Doe",
+    });
+
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 422 when token is missing", async () => {
+    const res = await request(app).post("/api/auth/accept-invite").send({
+      password: "NewPassword1!",
+      firstName: "Jane",
+      lastName: "Doe",
+    });
+
+    expect(res.status).toBe(422);
+  });
+
+  it("returns 422 when password is too short", async () => {
+    const { rawToken } = await setupInvite();
+
+    const res = await request(app).post("/api/auth/accept-invite").send({
+      token: rawToken,
+      password: "short",
+      firstName: "Jane",
+      lastName: "Doe",
+    });
+
+    expect(res.status).toBe(422);
+  });
+});

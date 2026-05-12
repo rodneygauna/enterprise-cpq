@@ -95,7 +95,7 @@ async function setUserStatus(userId, isActive) {
  * @param {object} invitingUser     - the admin performing the invite
  * @returns {User}                  - the created/updated pending user
  */
-async function inviteUser(email, invitingUser) {
+async function inviteUser(email, invitingUser, role = "sales_rep") {
   const normalizedEmail = email.toLowerCase().trim();
 
   const existing = await User.findOne({ email: normalizedEmail });
@@ -114,6 +114,7 @@ async function inviteUser(email, invitingUser) {
     // Reuse the existing stub record and refresh the token
     existing.inviteToken = tokenHash;
     existing.inviteExpires = new Date(Date.now() + INVITE_TOKEN_TTL_MS);
+    existing.role = role;
     await existing.save();
     pending = existing;
   } else {
@@ -123,7 +124,7 @@ async function inviteUser(email, invitingUser) {
       passwordHash: null,
       firstName: "Invited",
       lastName: "User",
-      role: "sales_rep",
+      role,
       isActive: false,
       inviteToken: tokenHash,
       inviteExpires: new Date(Date.now() + INVITE_TOKEN_TTL_MS),

@@ -11,6 +11,7 @@ const {
   registerUser,
   forgotPassword,
   resetPassword,
+  acceptInvite,
 } = require("../services/authService");
 const AppError = require("../utils/AppError");
 const User = require("../models/User");
@@ -177,6 +178,31 @@ router.post(
         error: null,
         meta: null,
       });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// ── POST /api/auth/accept-invite ─────────────────────────────────────────────
+router.post(
+  "/accept-invite",
+  credentialLimiter,
+  [
+    body("token").notEmpty().withMessage("Invite token is required"),
+    body("password")
+      .isLength({ min: 8 })
+      .withMessage("Password must be at least 8 characters"),
+    body("firstName").notEmpty().trim().withMessage("First name is required"),
+    body("lastName").notEmpty().trim().withMessage("Last name is required"),
+  ],
+  validate,
+  async (req, res, next) => {
+    try {
+      const { token, password, firstName, lastName } = req.body;
+      const user = await acceptInvite(token, { password, firstName, lastName });
+      issueTokens(res, user._id, user.role);
+      res.status(200).json({ data: user, error: null, meta: null });
     } catch (err) {
       next(err);
     }

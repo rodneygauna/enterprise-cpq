@@ -55,7 +55,7 @@ async function sendPasswordResetEmail(toEmail, rawToken) {
  */
 async function sendInviteEmail(toEmail, rawToken, inviterName) {
   const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
-  const inviteUrl = `${frontendUrl}/register?email=${encodeURIComponent(toEmail)}&invite=${encodeURIComponent(rawToken)}`;
+  const inviteUrl = `${frontendUrl}/accept-invite?email=${encodeURIComponent(toEmail)}&invite=${encodeURIComponent(rawToken)}`;
 
   // Stub mode: no SMTP configured, or running in the test environment
   if (!process.env.SMTP_HOST || process.env.NODE_ENV === "test") {

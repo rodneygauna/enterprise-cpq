@@ -10,6 +10,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import AcceptInvite from "./pages/AcceptInvite";
 import Settings from "./pages/Settings";
 import ProductLines from "./pages/ProductLines";
 import Products from "./pages/Products";
@@ -27,6 +28,7 @@ const router = createBrowserRouter(
     { path: "/register", element: <Register /> },
     { path: "/forgot-password", element: <ForgotPassword /> },
     { path: "/reset-password", element: <ResetPassword /> },
+    { path: "/accept-invite", element: <AcceptInvite /> },
     {
       path: "/",
       element: (

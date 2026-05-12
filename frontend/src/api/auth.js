@@ -8,3 +8,5 @@ export const forgotPassword = (email) =>
   api.post("/auth/forgot-password", { email });
 export const resetPassword = (token, password) =>
   api.post("/auth/reset-password", { token, password });
+export const acceptInvite = (token, firstName, lastName, password) =>
+  api.post("/auth/accept-invite", { token, firstName, lastName, password });
