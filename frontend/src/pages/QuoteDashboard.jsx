@@ -458,8 +458,8 @@ export default function QuoteDashboard() {
                   ))}
                 </select>
               </div>
-              <div className="col-md-1 d-flex gap-1">
-                <button type="submit" className="btn btn-primary btn-sm w-100">
+              <div className="col-auto d-flex gap-1">
+                <button type="submit" className="btn btn-primary btn-sm">
                   <i className="bi bi-funnel me-1" aria-hidden="true" />
                   Filter
                 </button>

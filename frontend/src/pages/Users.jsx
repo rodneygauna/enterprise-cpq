@@ -327,8 +327,8 @@ function UsersPanel() {
                   <option value="inactive">Inactive</option>
                 </select>
               </div>
-              <div className="col-md-2">
-                <button type="submit" className="btn btn-primary btn-sm w-100">
+              <div className="col-auto">
+                <button type="submit" className="btn btn-primary btn-sm">
                   <i className="bi bi-funnel me-2" aria-hidden="true" />
                   Filter
                 </button>
