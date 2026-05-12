@@ -30,6 +30,7 @@ import {
 import { getSettings } from "../api/settings";
 import QuoteSummaryPanel from "../components/QuoteSummaryPanel";
 import MultiYearForecast from "../components/MultiYearForecast";
+import OffcanvasDrawer from "../components/OffcanvasDrawer";
 import { useAuth } from "../hooks/useAuth";
 
 // ── Formatters ────────────────────────────────────────────────────────────────
@@ -166,6 +167,10 @@ export default function QuoteBuilder() {
   // ── Save state ───────────────────────────────────────────────────────────────
   const [quoteId, setQuoteId] = useState(null);
   const [saving, setSaving] = useState(false);
+
+  // ── Product view slideout ────────────────────────────────────────────────────
+  const [viewProduct, setViewProduct] = useState(null);
+  const [viewOpen, setViewOpen] = useState(false);
 
   // ── Load catalog on mount ────────────────────────────────────────────────────
   useEffect(() => {
@@ -676,7 +681,23 @@ export default function QuoteBuilder() {
             Baseline
           </span>
           <div className="flex-grow-1">
-            <div className="fw-semibold small">{product.name}</div>
+            <div className="fw-semibold small">
+              {product.name}
+              {product.sku && (
+                <button
+                  type="button"
+                  className="btn btn-link btn-sm p-0 fw-normal font-monospace ms-2"
+                  style={{ fontSize: "0.78rem" }}
+                  aria-label={`View details for ${product.name}`}
+                  onClick={() => {
+                    setViewProduct(product);
+                    setViewOpen(true);
+                  }}
+                >
+                  {product.sku}
+                </button>
+              )}
+            </div>
             <div className="text-muted" style={{ fontSize: "0.78rem" }}>
               {product.pricingModel} · auto-applied once per line
             </div>
@@ -708,16 +729,25 @@ export default function QuoteBuilder() {
           <div className="flex-grow-1">
             <label
               htmlFor={`product-${productId}`}
-              className="fw-semibold mb-0 cursor-pointer"
+              className="fw-semibold mb-0"
               style={{ cursor: "pointer" }}
             >
               {product.name}
-              {product.sku && (
-                <span className="text-muted fw-normal small ms-2">
-                  ({product.sku})
-                </span>
-              )}
             </label>
+            {product.sku && (
+              <button
+                type="button"
+                className="btn btn-link btn-sm p-0 fw-normal font-monospace ms-2"
+                style={{ fontSize: "0.78rem" }}
+                aria-label={`View details for ${product.name}`}
+                onClick={() => {
+                  setViewProduct(product);
+                  setViewOpen(true);
+                }}
+              >
+                {product.sku}
+              </button>
+            )}
             <div className="text-muted" style={{ fontSize: "0.78rem" }}>
               {product.pricingModel} · {product.pricingStrategy} ·{" "}
               {product.billingType}
@@ -1221,6 +1251,102 @@ export default function QuoteBuilder() {
           />
         </div>
       </div>
+
+      {/* ── Product view slideout ── */}
+      <OffcanvasDrawer
+        open={viewOpen}
+        title={viewProduct?.name ?? ""}
+        onClose={() => setViewOpen(false)}
+      >
+        {viewProduct && (
+          <dl className="row mb-0 small">
+            <dt className="col-5">SKU</dt>
+            <dd className="col-7 font-monospace">{viewProduct.sku || "—"}</dd>
+
+            <dt className="col-5">Product Line</dt>
+            <dd className="col-7">
+              {typeof viewProduct.productLineId === "object" &&
+              viewProduct.productLineId !== null
+                ? (viewProduct.productLineId.name ?? "—")
+                : (productLines.find(
+                    (l) =>
+                      l._id?.toString() ===
+                      viewProduct.productLineId?.toString(),
+                  )?.name ?? "—")}
+            </dd>
+
+            <dt className="col-5">Type</dt>
+            <dd className="col-7">{viewProduct.type}</dd>
+
+            <dt className="col-5">Pricing Model</dt>
+            <dd className="col-7">{viewProduct.pricingModel}</dd>
+
+            <dt className="col-5">Pricing Strategy</dt>
+            <dd className="col-7">{viewProduct.pricingStrategy}</dd>
+
+            <dt className="col-5">Billing Type</dt>
+            <dd className="col-7">{viewProduct.billingType}</dd>
+
+            <dt className="col-5">Scope Pricing</dt>
+            <dd className="col-7">{viewProduct.scopeBasedPricing}</dd>
+
+            <dt className="col-5">Base Price</dt>
+            <dd className="col-7">
+              {viewProduct.basePrice != null
+                ? `$${Number(viewProduct.basePrice).toFixed(2)}`
+                : "—"}
+            </dd>
+
+            <dt className="col-5">Impl. Fee</dt>
+            <dd className="col-7">
+              {viewProduct.implementationFee != null
+                ? `$${Number(viewProduct.implementationFee).toFixed(2)}`
+                : "—"}
+            </dd>
+
+            {viewProduct.tiers && viewProduct.tiers.length > 0 && (
+              <>
+                <dt className="col-5">Tiers</dt>
+                <dd className="col-7">
+                  <ul className="list-unstyled mb-0">
+                    {viewProduct.tiers.map((t, i) => (
+                      <li key={i}>
+                        &ge;&nbsp;{t.min}&nbsp;&rarr;&nbsp;$
+                        {Number(t.price).toFixed(2)}
+                      </li>
+                    ))}
+                  </ul>
+                </dd>
+              </>
+            )}
+
+            {viewProduct.volumeBands && viewProduct.volumeBands.length > 0 && (
+              <>
+                <dt className="col-5">Volume Bands</dt>
+                <dd className="col-7">
+                  <ul className="list-unstyled mb-0">
+                    {viewProduct.volumeBands.map((b, i) => (
+                      <li key={i}>
+                        {b.label}: ${Number(b.price).toFixed(2)}
+                        {b.implPrice
+                          ? ` (impl $${Number(b.implPrice).toFixed(2)})`
+                          : ""}
+                      </li>
+                    ))}
+                  </ul>
+                </dd>
+              </>
+            )}
+
+            {viewProduct.description && (
+              <>
+                <dt className="col-5">Description</dt>
+                <dd className="col-7">{viewProduct.description}</dd>
+              </>
+            )}
+          </dl>
+        )}
+      </OffcanvasDrawer>
     </div>
   );
 }
