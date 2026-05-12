@@ -238,6 +238,12 @@ h1, h2, h3, h4, h5, h6,
   color: var(--bs-secondary);
 }
 
+/* Striped rows on every table by default (improves row scanability) */
+.table > tbody > tr:nth-of-type(odd) > * {
+  --bs-table-color: var(--bs-table-striped-color);
+  background-color: var(--bs-table-striped-bg);
+}
+
 /* ── 9. Form overrides ───────────────────────────────────────── */
 .form-control,
 .form-select {
@@ -286,10 +292,46 @@ h1, h2, h3, h4, h5, h6,
 }
 
 [data-bs-theme="dark"] .card {
-  border-color: rgba(255, 255, 255, 0.08);
+  /*
+   * In Bootstrap's dark theme, --bs-card-bg resolves to --bs-body-bg (#212529),
+   * making cards visually flush with the page. Elevate cards to
+   * --bs-secondary-bg (#343a40) so they stand out like they do in light mode.
+   */
+  --bs-card-bg: var(--bs-secondary-bg);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5),
+              0 0 0 1px rgba(255, 255, 255, 0.06),
+              inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 [data-bs-theme="dark"] .cpq-topbar,
 [data-bs-theme="dark"] .cpq-sidebar {
   border-color: rgba(255, 255, 255, 0.1);
+}
+
+/*
+ * WCAG 2.1 AA fix: --bs-primary (#0d6efd) has only ~3.5:1 contrast on dark
+ * backgrounds. Bootstrap 5.3 provides --bs-primary-text-emphasis (#6ea8fe) —
+ * a lighter tint designed for text on dark surfaces — which achieves ~7.5:1.
+ */
+[data-bs-theme="dark"] .cpq-nav-link:hover,
+[data-bs-theme="dark"] .cpq-nav-link.active {
+  color: var(--bs-primary-text-emphasis);
+}
+
+/*
+ * WCAG 2.1 AA fix: --bs-secondary (#6c757d) has only ~3.3:1 on dark body bg
+ * and ~2.5:1 inside cards (dark secondary-bg). --bs-secondary-color is
+ * Bootstrap 5.3's accessible muted-text token for dark mode (~8:1+).
+ *
+ * Also reset --bs-table-bg on th and thead.table-light: Bootstrap sets it to
+ * #f8f9fa (light-mode value) which produces a near-white header in dark mode —
+ * 1.24:1 against light body text. Transparent lets the row inherit
+ * --bs-tertiary-bg (#2b3035), Bootstrap 5.3's correct dark table stripe color.
+ */
+[data-bs-theme="dark"] .table th,
+[data-bs-theme="dark"] thead.table-light > tr > * {
+  color: var(--bs-secondary-color);
+  --bs-table-bg: transparent;
+  --bs-table-color: var(--bs-body-color);
 }
