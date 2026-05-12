@@ -34,7 +34,7 @@ export default function Login() {
   return (
     <main
       id="main-content"
-      className="d-flex align-items-center justify-content-center min-vh-100 bg-light"
+      className="d-flex align-items-center justify-content-center min-vh-100 bg-body"
     >
       <div
         className="card shadow-sm"

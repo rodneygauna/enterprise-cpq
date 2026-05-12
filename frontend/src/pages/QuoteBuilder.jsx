@@ -671,7 +671,7 @@ export default function QuoteBuilder() {
       return (
         <div
           key={productId}
-          className={`d-flex align-items-start gap-3 py-2 border-bottom bg-light px-2 rounded-1${isChild ? " ms-4" : ""}`}
+          className={`d-flex align-items-start gap-3 py-2 border-bottom bg-body-tertiary px-2 rounded-1${isChild ? " ms-4" : ""}`}
           role="listitem"
         >
           <span
