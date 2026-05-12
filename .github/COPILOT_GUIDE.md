@@ -77,16 +77,17 @@ authentication, JWT, Passport.js, Salesforce OAuth, or password reset.
 
 Type `/` in the Copilot chat input to see available prompts.
 
-| Command                   | Argument                                        | What it does                                                                  |
-| ------------------------- | ----------------------------------------------- | ----------------------------------------------------------------------------- |
-| `/implement-feature`      | `7.1 Authentication`                            | Full end-to-end feature implementation from PRD                               |
-| `/add-product`            | _(optional) product name_                       | Scaffolds Mongoose schema + Express CRUD routes + React admin form            |
-| `/create-api-route`       | `quotes — GET list, POST create`                | Scaffolds an Express router file with auth, validation, response shape        |
-| `/create-mongoose-model`  | `Quote — clientName, termLength, status`        | Scaffolds a Mongoose schema from a field list                                 |
-| `/create-react-page`      | `ProductCatalog at /admin/products, admin only` | Scaffolds a React page with routing, layout, fetching, role guard             |
-| `/create-tests`           | `backend/src/routes/products.js`                | Generates unit + integration tests for a route file or component              |
-| `/audit-accessibility`    | `frontend/src/pages/QuoteBuilder.jsx`           | Audits a component for WCAG 2.1 AA, reports violations, applies fixes         |
-| `/salesforce-integration` | `opportunity pull`                              | Scaffolds a specific Salesforce integration feature (FR-SF-1 through FR-SF-5) |
+| Command                   | Argument                                        | What it does                                                                                                                         |
+| ------------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `/implement-feature`      | `7.1 Authentication`                            | Full end-to-end feature implementation from PRD                                                                                      |
+| `/plan-feature`           | `bulk product import`                           | Plans a net-new feature not in the PRD: codebase research, developer interview, plan doc, PRD draft, handoff to `/implement-feature` |
+| `/add-product`            | _(optional) product name_                       | Scaffolds Mongoose schema + Express CRUD routes + React admin form                                                                   |
+| `/create-api-route`       | `quotes — GET list, POST create`                | Scaffolds an Express router file with auth, validation, response shape                                                               |
+| `/create-mongoose-model`  | `Quote — clientName, termLength, status`        | Scaffolds a Mongoose schema from a field list                                                                                        |
+| `/create-react-page`      | `ProductCatalog at /admin/products, admin only` | Scaffolds a React page with routing, layout, fetching, role guard                                                                    |
+| `/create-tests`           | `backend/src/routes/products.js`                | Generates unit + integration tests for a route file or component                                                                     |
+| `/audit-accessibility`    | `frontend/src/pages/QuoteBuilder.jsx`           | Audits a component for WCAG 2.1 AA, reports violations, applies fixes                                                                |
+| `/salesforce-integration` | `opportunity pull`                              | Scaffolds a specific Salesforce integration feature (FR-SF-1 through FR-SF-5)                                                        |
 
 ---
 
@@ -100,29 +101,31 @@ Type `/` in the Copilot chat input to see available prompts.
 
 ### File-Specific Instructions (`.github/instructions/`)
 
-| File                               | Triggers on                                 | What it covers                                                                      |
-| ---------------------------------- | ------------------------------------------- | ----------------------------------------------------------------------------------- |
-| `backend.instructions.md`          | `backend/**`                                | Express router pattern, middleware chain, response shape, input validation          |
-| `mongoose-models.instructions.md`  | `backend/src/models/**`                     | PRD Section 8 schemas, all enums, timestamps, soft-delete, embed vs reference       |
-| `frontend.instructions.md`         | `frontend/**`                               | React/Vite project structure, Bootstrap CSS vars, React Router v6, Axios, `useAuth` |
-| `auth.instructions.md`             | On-demand                                   | Passport.js local + JWT, access/refresh cookies, Salesforce OAuth, password reset   |
-| `docker.instructions.md`           | `docker-compose*.yml`, `Caddyfile`, `.env*` | Three services, dev vs prod, `.env.example`, Makefile targets                       |
-| `testing-backend.instructions.md`  | `backend/**/*.test.js`                      | Jest + Supertest, `mongodb-memory-server`, test structure, what to test per route   |
-| `testing-frontend.instructions.md` | `frontend/src/**/*.test.*`                  | Vitest + RTL, mock Axios + `useAuth`, behavior assertions, no snapshots             |
-| `accessibility.instructions.md`    | `frontend/**`                               | WCAG 2.1 AA rules: semantic HTML, labels, contrast, ARIA, focus, keyboard nav       |
+| File                               | Triggers on                                 | What it covers                                                                                                 |
+| ---------------------------------- | ------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `backend.instructions.md`          | `backend/**`                                | Express router pattern, middleware chain, response shape, input validation                                     |
+| `mongoose-models.instructions.md`  | `backend/src/models/**`                     | PRD Section 8 schemas, all enums, timestamps, soft-delete, embed vs reference                                  |
+| `frontend.instructions.md`         | `frontend/**`                               | React/Vite project structure, Bootstrap CSS vars, React Router v6, Axios, `useAuth`                            |
+| `auth.instructions.md`             | On-demand                                   | Passport.js local + JWT, access/refresh cookies, Salesforce OAuth, password reset                              |
+| `planning.instructions.md`         | On-demand                                   | Codebase research checklist, developer interview template, plan doc structure, PRD draft format, handoff rules |
+| `docker.instructions.md`           | `docker-compose*.yml`, `Caddyfile`, `.env*` | Three services, dev vs prod, `.env.example`, Makefile targets                                                  |
+| `testing-backend.instructions.md`  | `backend/**/*.test.js`                      | Jest + Supertest, `mongodb-memory-server`, test structure, what to test per route                              |
+| `testing-frontend.instructions.md` | `frontend/src/**/*.test.*`                  | Vitest + RTL, mock Axios + `useAuth`, behavior assertions, no snapshots                                        |
+| `accessibility.instructions.md`    | `frontend/**`                               | WCAG 2.1 AA rules: semantic HTML, labels, contrast, ARIA, focus, keyboard nav                                  |
 
 ### Prompts (`.github/prompts/`)
 
-| File                               | Slash command             | What it does                                                                     |
-| ---------------------------------- | ------------------------- | -------------------------------------------------------------------------------- |
-| `implement-feature.prompt.md`      | `/implement-feature`      | Master workflow: PRD → backend → frontend → tests → seed → a11y audit → test run |
-| `add-product.prompt.md`            | `/add-product`            | Full product scaffold: Mongoose schema, Express CRUD, React admin form           |
-| `create-api-route.prompt.md`       | `/create-api-route`       | Express router with middleware, validation, response shape                       |
-| `create-mongoose-model.prompt.md`  | `/create-mongoose-model`  | Mongoose schema from field list                                                  |
-| `create-react-page.prompt.md`      | `/create-react-page`      | React page with routing, Bootstrap layout, fetching, role guard                  |
-| `create-tests.prompt.md`           | `/create-tests`           | Unit + integration tests for a route file or component/hook                      |
-| `audit-accessibility.prompt.md`    | `/audit-accessibility`    | WCAG 2.1 AA audit of a component; fixes violations in-place                      |
-| `salesforce-integration.prompt.md` | `/salesforce-integration` | Phase 3: Salesforce OAuth, opportunity pull, quote writeback, pricebook sync     |
+| File                               | Slash command             | What it does                                                                                |
+| ---------------------------------- | ------------------------- | ------------------------------------------------------------------------------------------- |
+| `implement-feature.prompt.md`      | `/implement-feature`      | Master workflow: PRD → backend → frontend → tests → seed → a11y audit → test run            |
+| `plan-feature.prompt.md`           | `/plan-feature`           | Planning workflow: codebase research → developer interview → plan doc → PRD draft → handoff |
+| `add-product.prompt.md`            | `/add-product`            | Full product scaffold: Mongoose schema, Express CRUD, React admin form                      |
+| `create-api-route.prompt.md`       | `/create-api-route`       | Express router with middleware, validation, response shape                                  |
+| `create-mongoose-model.prompt.md`  | `/create-mongoose-model`  | Mongoose schema from field list                                                             |
+| `create-react-page.prompt.md`      | `/create-react-page`      | React page with routing, Bootstrap layout, fetching, role guard                             |
+| `create-tests.prompt.md`           | `/create-tests`           | Unit + integration tests for a route file or component/hook                                 |
+| `audit-accessibility.prompt.md`    | `/audit-accessibility`    | WCAG 2.1 AA audit of a component; fixes violations in-place                                 |
+| `salesforce-integration.prompt.md` | `/salesforce-integration` | Phase 3: Salesforce OAuth, opportunity pull, quote writeback, pricebook sync                |
 
 ---
 
