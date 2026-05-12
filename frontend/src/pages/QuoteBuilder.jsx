@@ -16,6 +16,8 @@ import {
   calculateQuoteSummary,
   computeYearlySummary,
   resolveVolumeBand,
+  computeMargin,
+  resolveMarginStatus,
 } from "../utils/pricing";
 import { getProducts } from "../api/products";
 import { getProductLines } from "../api/productLines";
@@ -25,6 +27,7 @@ import {
   updateQuote,
   duplicateQuote,
 } from "../api/quotes";
+import { getSettings } from "../api/settings";
 import QuoteSummaryPanel from "../components/QuoteSummaryPanel";
 import MultiYearForecast from "../components/MultiYearForecast";
 import { useAuth } from "../hooks/useAuth";
@@ -134,6 +137,7 @@ export default function QuoteBuilder() {
   // ── Catalog data ────────────────────────────────────────────────────────────
   const [products, setProducts] = useState([]);
   const [productLines, setProductLines] = useState([]);
+  const [marginTargets, setMarginTargets] = useState(null);
   const [dataLoading, setDataLoading] = useState(true);
   const [dataError, setDataError] = useState(null);
 
@@ -165,10 +169,11 @@ export default function QuoteBuilder() {
 
   // ── Load catalog on mount ────────────────────────────────────────────────────
   useEffect(() => {
-    Promise.all([getProducts(), getProductLines()])
-      .then(([prods, lines]) => {
+    Promise.all([getProducts(), getProductLines(), getSettings()])
+      .then(([prods, lines, settings]) => {
         setProducts(prods || []);
         setProductLines(lines || []);
+        setMarginTargets(settings?.marginTargets ?? null);
       })
       .catch(() => setDataError("Failed to load product catalog."))
       .finally(() => setDataLoading(false));
@@ -379,6 +384,37 @@ export default function QuoteBuilder() {
         (item) => item.product.scopeBasedPricing === "All",
       ).length,
     [lineItemsForCalc],
+  );
+
+  // ── Margin scoring memos (FR-MARGIN-1/3) ────────────────────────────────────
+  const activeLineNames = useMemo(
+    () =>
+      [...activeLineIds]
+        .map((id) => productLines.find((l) => l._id?.toString() === id)?.name)
+        .filter(Boolean),
+    [activeLineIds, productLines],
+  );
+
+  const margin = useMemo(() => {
+    // Build items in the stored format that computeMargin expects
+    const items = lineItemsForCalc.map((item) => {
+      const calc = calculateLineItem(item.product, item.params);
+      const adjustedPrice = item.adjustment
+        ? applyLineItemAdjustment(calc.extendedPrice, item.adjustment)
+        : calc.extendedPrice;
+      return {
+        adjustedPrice,
+        quantity: item.params.quantity ?? 1,
+        productSnapshot: item.product,
+      };
+    });
+    return computeMargin(items);
+  }, [lineItemsForCalc]);
+
+  const marginStatus = useMemo(
+    () =>
+      resolveMarginStatus(margin.marginPercent, marginTargets, activeLineNames),
+    [margin.marginPercent, marginTargets, activeLineNames],
   );
 
   // ── Selection management ─────────────────────────────────────────────────────
@@ -1180,6 +1216,8 @@ export default function QuoteBuilder() {
             scopeReviewCount={scopeReviewCount}
             saving={saving}
             onSave={handleSave}
+            marginPercent={margin.marginPercent}
+            marginStatus={marginStatus}
           />
         </div>
       </div>

@@ -23,6 +23,7 @@ import { vi } from "vitest";
 vi.mock("../../api/axios");
 vi.mock("../../hooks/useAuth");
 vi.mock("../../api/settings");
+vi.mock("../../api/productLines");
 vi.mock("react-toastify", () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }));
@@ -43,7 +44,9 @@ import {
   getSettings,
   updateSettings,
   updateDiscountSettings,
+  updateMarginSettings,
 } from "../../api/settings";
+import { getProductLines } from "../../api/productLines";
 import { toast } from "react-toastify";
 import Settings from "../Settings";
 
@@ -68,6 +71,19 @@ beforeEach(() => {
     primaryColor: "#0d6efd",
     accentColor: "#6c757d",
     logoUrl: null,
+    discountThresholds: {
+      managerReviewPercent: 10,
+      executiveReviewPercent: 25,
+    },
+    volumeDiscountRules: [],
+    marginTargets: { global: { green: 50, yellow: 30 }, productLines: {} },
+  });
+  getProductLines.mockResolvedValue([
+    { _id: "line-1", name: "Care Management" },
+    { _id: "line-2", name: "Population Health" },
+  ]);
+  updateMarginSettings.mockResolvedValue({
+    marginTargets: { global: { green: 50, yellow: 30 }, productLines: {} },
   });
 });
 
@@ -273,5 +289,78 @@ describe("Settings — discount settings form", () => {
         expect.stringContaining("Discount"),
       ),
     );
+  });
+});
+
+// ── §7.9 Margin settings ──────────────────────────────────────────────────────
+describe("Margin scorecard settings form", () => {
+  it("renders margin scorecard section for admin", async () => {
+    renderSettings("admin");
+    await waitFor(() =>
+      expect(screen.getByText(/margin scorecard/i)).toBeInTheDocument(),
+    );
+    expect(
+      screen.getByLabelText(/global green threshold/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByLabelText(/global yellow threshold/i),
+    ).toBeInTheDocument();
+  });
+
+  it("pre-fills global thresholds from settings", async () => {
+    renderSettings("admin");
+    await waitFor(() =>
+      expect(screen.getByText(/margin scorecard/i)).toBeInTheDocument(),
+    );
+    expect(screen.getByLabelText(/global green threshold/i)).toHaveValue(50);
+    expect(screen.getByLabelText(/global yellow threshold/i)).toHaveValue(30);
+  });
+
+  it("calls updateMarginSettings on save", async () => {
+    const user = userEvent.setup();
+    renderSettings("admin");
+    await waitFor(() =>
+      expect(screen.getByText(/margin scorecard/i)).toBeInTheDocument(),
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: /save margin settings/i }),
+    );
+
+    await waitFor(() => expect(updateMarginSettings).toHaveBeenCalled());
+  });
+
+  it("shows success toast after saving margin settings", async () => {
+    const user = userEvent.setup();
+    renderSettings("admin");
+    await waitFor(() =>
+      expect(screen.getByText(/margin scorecard/i)).toBeInTheDocument(),
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: /save margin settings/i }),
+    );
+
+    await waitFor(() =>
+      expect(toast.success).toHaveBeenCalledWith(
+        expect.stringContaining("Margin"),
+      ),
+    );
+  });
+
+  it("shows Add Override button and allows adding a per-line override row", async () => {
+    const user = userEvent.setup();
+    renderSettings("admin");
+    await waitFor(() =>
+      expect(screen.getByText(/margin scorecard/i)).toBeInTheDocument(),
+    );
+
+    const addBtn = screen.getByRole("button", { name: /\+ add override/i });
+    await user.click(addBtn);
+
+    // Should now show a product line selector
+    expect(
+      screen.getByLabelText(/product line for override 1/i),
+    ).toBeInTheDocument();
   });
 });

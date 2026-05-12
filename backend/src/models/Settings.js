@@ -13,12 +13,13 @@ const settingsSchema = new mongoose.Schema(
       executiveReviewPercent: { type: Number, default: 25 },
     },
 
-    // Phase 2 — Margin scoring (stub fields)
+    // Phase 2 — Margin scoring (FR-MARGIN-2)
     marginTargets: {
       global: {
         green: { type: Number, default: 50 },
         yellow: { type: Number, default: 30 },
       },
+      // Map of productLine name → { green: Number, yellow: Number }
       productLines: { type: Map, of: { green: Number, yellow: Number } },
     },
 

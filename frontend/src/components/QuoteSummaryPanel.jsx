@@ -32,6 +32,8 @@ export default function QuoteSummaryPanel({
   scopeReviewCount,
   saving,
   onSave,
+  marginPercent,
+  marginStatus,
 }) {
   const {
     totalPMPM = 0,
@@ -73,6 +75,42 @@ export default function QuoteSummaryPanel({
           <hr className="my-2" />
           <Row label="Net TCV" value={USD.format(netTCV)} bold large />
         </div>
+
+        {/* Margin Scorecard badge (FR-MARGIN-3) */}
+        {marginStatus && (
+          <div className="mb-3">
+            <div className="d-flex align-items-center gap-2">
+              <span
+                className={`badge rounded-pill ${
+                  marginStatus === "green"
+                    ? "bg-success"
+                    : marginStatus === "yellow"
+                      ? "bg-warning text-dark"
+                      : "bg-danger"
+                }`}
+                aria-label={`Margin score: ${marginStatus}`}
+              >
+                {marginStatus === "green"
+                  ? "● Healthy Margin"
+                  : marginStatus === "yellow"
+                    ? "● Manager Review"
+                    : "● Executive Review"}
+              </span>
+              {marginPercent !== null && marginPercent !== undefined && (
+                <span className="text-muted small">
+                  {marginPercent.toFixed(1)}%
+                </span>
+              )}
+            </div>
+            {marginStatus !== "green" && (
+              <p className="text-muted small mb-0 mt-1">
+                {marginStatus === "yellow"
+                  ? "Margin below green threshold — will route to Manager Review."
+                  : "Margin below yellow threshold — will route to Executive Review."}
+              </p>
+            )}
+          </div>
+        )}
 
         {scopeReviewCount > 0 && (
           <div

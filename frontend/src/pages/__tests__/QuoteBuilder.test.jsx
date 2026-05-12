@@ -44,11 +44,13 @@ vi.mock("../../api/quotes");
 vi.mock("react-toastify", () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }));
+vi.mock("../../api/settings");
 
 import { useAuth } from "../../hooks/useAuth";
 import { getProducts } from "../../api/products";
 import { getProductLines } from "../../api/productLines";
 import { createQuote, updateQuote, getQuote } from "../../api/quotes";
+import { getSettings } from "../../api/settings";
 import { toast } from "react-toastify";
 import QuoteBuilder from "../QuoteBuilder";
 import { computeYearlySummary, calculateLineItem } from "../../utils/pricing";
@@ -146,6 +148,9 @@ beforeEach(() => {
   vi.clearAllMocks();
   getProducts.mockResolvedValue([CORE_PRODUCT, ADDON_PRODUCT]);
   getProductLines.mockResolvedValue([SAMPLE_LINE]);
+  getSettings.mockResolvedValue({
+    marginTargets: { global: { green: 50, yellow: 30 }, productLines: {} },
+  });
   getQuote.mockResolvedValue({
     _id: "new-quote-1",
     clientName: "Existing Client",
@@ -555,5 +560,50 @@ describe("calculateLineItem — PMPM standard", () => {
     });
     expect(result.extendedPrice).toBe(0);
     expect(result.implementationFee).toBe(0);
+  });
+});
+
+// ─── §7.9 Margin badge ────────────────────────────────────────────────────────
+describe("Financial summary panel: margin badge", () => {
+  it("shows no margin badge when no products are selected", async () => {
+    renderPage();
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("status", { name: /loading/i }),
+      ).not.toBeInTheDocument(),
+    );
+    expect(screen.queryByText(/margin/i)).not.toBeInTheDocument();
+  });
+
+  it("shows Healthy Margin badge when margin is green", async () => {
+    // CORE_PRODUCT: basePrice=10, unitCost=4, scopeBasedPricing=None
+    // With 5000 members × 12 months: revenue = 600000, cost = 240000 → 60% margin → green
+    renderPage();
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("status", { name: /loading/i }),
+      ).not.toBeInTheDocument(),
+    );
+
+    // Activate the product line
+    const pill = await screen.findByRole("button", {
+      name: /care management/i,
+    });
+    await userEvent.click(pill);
+
+    // Select the product
+    const checkbox = await screen.findByRole("checkbox", {
+      name: /core platform/i,
+    });
+    await userEvent.click(checkbox);
+
+    // Fill in membership count so revenue > 0
+    const membersInput = screen.getByLabelText(/membership count/i);
+    await userEvent.clear(membersInput);
+    await userEvent.type(membersInput, "5000");
+
+    await waitFor(() => {
+      expect(screen.getByText(/healthy margin/i)).toBeInTheDocument();
+    });
   });
 });

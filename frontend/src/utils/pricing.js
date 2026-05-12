@@ -287,3 +287,83 @@ export function computeYearlySummary(
 
   return result;
 }
+
+// ── §7.9 Margin Scoring ───────────────────────────────────────────────────────
+
+/**
+ * Computes the blended margin for a quote (FR-MARGIN-1).
+ *
+ * Items where productSnapshot.scopeBasedPricing (or item.product.scopeBasedPricing)
+ * equals "All" are excluded from both revenue and cost.
+ *
+ * @param {object[]} selectedItems  array of quote line items
+ *   Each item is expected to have:
+ *     - adjustedPrice: number (post-adjustment extended revenue)
+ *     - quantity: number (defaults to 1)
+ *     - productSnapshot: { unitCost?, scopeBasedPricing? }  OR  item.product: {...}
+ * @returns {{ totalRevenue: number, totalCost: number, grossProfit: number, marginPercent: number|null }}
+ */
+export function computeMargin(selectedItems = []) {
+  let totalRevenue = 0;
+  let totalCost = 0;
+
+  for (const item of selectedItems) {
+    const snap = item.productSnapshot ?? item.product ?? {};
+    if (snap.scopeBasedPricing === "All") continue;
+
+    totalRevenue += item.adjustedPrice ?? 0;
+    const unitCost = typeof snap.unitCost === "number" ? snap.unitCost : 0;
+    const qty =
+      typeof item.quantity === "number" && item.quantity > 0
+        ? item.quantity
+        : 1;
+    totalCost += unitCost * qty;
+  }
+
+  totalRevenue = Math.round(totalRevenue * 100) / 100;
+  totalCost = Math.round(totalCost * 100) / 100;
+  const grossProfit = Math.round((totalRevenue - totalCost) * 100) / 100;
+
+  const marginPercent =
+    totalRevenue > 0
+      ? Math.round((grossProfit / totalRevenue) * 10000) / 100
+      : null;
+
+  return { totalRevenue, totalCost, grossProfit, marginPercent };
+}
+
+/**
+ * Determines the margin traffic-light status (FR-MARGIN-3).
+ *
+ * Uses the most restrictive per-line override (highest green threshold) among
+ * the quote's active product-line names; falls back to global thresholds.
+ *
+ * @param {number|null} marginPercent
+ * @param {{ global?: { green?: number, yellow?: number }, productLines?: object }} marginTargets
+ * @param {string[]} activeProductLineNames
+ * @returns {"green"|"yellow"|"red"|null}
+ */
+export function resolveMarginStatus(
+  marginPercent,
+  marginTargets,
+  activeProductLineNames = [],
+) {
+  if (marginPercent === null || marginPercent === undefined) return null;
+
+  const g = marginTargets?.global ?? {};
+  let effectiveGreen = g.green ?? 50;
+  let effectiveYellow = g.yellow ?? 30;
+
+  const lineOverrides = marginTargets?.productLines ?? {};
+  for (const name of activeProductLineNames) {
+    const ov = lineOverrides[name];
+    if (ov && typeof ov.green === "number" && ov.green > effectiveGreen) {
+      effectiveGreen = ov.green;
+      effectiveYellow = ov.yellow ?? effectiveYellow;
+    }
+  }
+
+  if (marginPercent >= effectiveGreen) return "green";
+  if (marginPercent >= effectiveYellow) return "yellow";
+  return "red";
+}

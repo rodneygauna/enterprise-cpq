@@ -247,3 +247,79 @@ describe("PUT /api/settings/discount", () => {
     expect(res.body.data.volumeDiscountRules[0].discountPercent).toBe(5);
   });
 });
+
+// ── PUT /api/settings/margin ──────────────────────────────────────────────────
+describe("PUT /api/settings/margin", () => {
+  it("returns 401 for unauthenticated requests", async () => {
+    const res = await request(app)
+      .put("/api/settings/margin")
+      .send({ marginTargets: { global: { green: 55, yellow: 35 } } });
+    expect(res.status).toBe(401);
+  });
+
+  it("returns 403 for sales_rep", async () => {
+    const user = await createUser("sales_rep");
+    const token = tokenFor("sales_rep", user._id.toString());
+    const res = await request(app)
+      .put("/api/settings/margin")
+      .set("Cookie", `access_token=${token}`)
+      .send({ marginTargets: { global: { green: 55, yellow: 35 } } });
+    expect(res.status).toBe(403);
+  });
+
+  it("returns 200 and updates global thresholds for admin", async () => {
+    const user = await createUser("admin");
+    const token = tokenFor("admin", user._id.toString());
+    const res = await request(app)
+      .put("/api/settings/margin")
+      .set("Cookie", `access_token=${token}`)
+      .send({ marginTargets: { global: { green: 60, yellow: 40 } } });
+    expect(res.status).toBe(200);
+    expect(res.body.data.marginTargets.global.green).toBe(60);
+    expect(res.body.data.marginTargets.global.yellow).toBe(40);
+  });
+
+  it("returns 200 and updates global thresholds for super_admin", async () => {
+    const user = await createUser("super_admin");
+    const token = tokenFor("super_admin", user._id.toString());
+    const res = await request(app)
+      .put("/api/settings/margin")
+      .set("Cookie", `access_token=${token}`)
+      .send({ marginTargets: { global: { green: 55, yellow: 35 } } });
+    expect(res.status).toBe(200);
+    expect(res.body.data.marginTargets.global.green).toBe(55);
+  });
+
+  it("returns 422 when global.green is out of range (> 100)", async () => {
+    const user = await createUser("admin");
+    const token = tokenFor("admin", user._id.toString());
+    const res = await request(app)
+      .put("/api/settings/margin")
+      .set("Cookie", `access_token=${token}`)
+      .send({ marginTargets: { global: { green: 120, yellow: 30 } } });
+    expect(res.status).toBe(422);
+  });
+
+  it("stores per-product-line overrides", async () => {
+    const user = await createUser("admin");
+    const token = tokenFor("admin", user._id.toString());
+    const res = await request(app)
+      .put("/api/settings/margin")
+      .set("Cookie", `access_token=${token}`)
+      .send({
+        marginTargets: {
+          global: { green: 50, yellow: 30 },
+          productLines: {
+            "Core Benefits": { green: 65, yellow: 45 },
+          },
+        },
+      });
+    expect(res.status).toBe(200);
+    // productLines is stored as a Map; the response serializes it as an object
+    const productLines = res.body.data.marginTargets.productLines;
+    expect(productLines["Core Benefits"]).toMatchObject({
+      green: 65,
+      yellow: 45,
+    });
+  });
+});

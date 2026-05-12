@@ -32,3 +32,14 @@ export async function updateDiscountSettings(data) {
   const res = await api.put("/settings/discount", data);
   return res.data.data;
 }
+
+/**
+ * Updates margin scorecard settings (admin / super_admin only).
+ *
+ * @param {object} data - { marginTargets: { global: { green, yellow }, productLines: { [name]: { green, yellow } } } }
+ * @returns {Promise<object>} Updated settings document
+ */
+export async function updateMarginSettings(data) {
+  const res = await api.put("/settings/margin", data);
+  return res.data.data;
+}

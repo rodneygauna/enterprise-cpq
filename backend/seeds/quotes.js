@@ -14,6 +14,29 @@
  */
 
 const { calculateLineItem } = require("../src/utils/pricing");
+const {
+  computeMargin,
+  resolveMarginStatus,
+  resolveMarginThresholds,
+} = require("../src/services/marginService");
+
+// Default margin thresholds used when seeding (matches Settings defaults)
+const DEFAULT_MARGIN_TARGETS = {
+  global: { green: 50, yellow: 30 },
+  productLines: {},
+};
+
+/**
+ * Computes margin percent and status for seed quotes using the default thresholds.
+ * @param {Array} selectedItems
+ * @returns {{ marginPercent: number|null, marginStatus: string|null }}
+ */
+function computeSeedMargin(selectedItems) {
+  const { marginPercent } = computeMargin(selectedItems);
+  const thresholds = resolveMarginThresholds([], DEFAULT_MARGIN_TARGETS);
+  const marginStatus = resolveMarginStatus(marginPercent, thresholds);
+  return { marginPercent, marginStatus };
+}
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -267,6 +290,7 @@ async function seedQuotes(Quote, User, Product, ProductLine) {
       hasScopeBasedItems: false,
       status: "Draft",
       ownerId: salesRep._id,
+      ...computeSeedMargin(selectedItems),
     };
   })();
 
@@ -309,6 +333,7 @@ async function seedQuotes(Quote, User, Product, ProductLine) {
       hasScopeBasedItems: false,
       status: "Manager Review",
       ownerId: salesRep._id,
+      ...computeSeedMargin(selectedItems),
     };
   })();
 
@@ -350,6 +375,7 @@ async function seedQuotes(Quote, User, Product, ProductLine) {
       ownerId: salesMgr._id,
       approvedBy: exec._id,
       approvalComment: "Strong strategic fit and healthy margins. Approved.",
+      ...computeSeedMargin(selectedItems),
     };
   })();
 
@@ -391,6 +417,7 @@ async function seedQuotes(Quote, User, Product, ProductLine) {
       approvedBy: exec._id,
       approvalComment:
         "Discount exceeds approved threshold without sufficient strategic justification. Please resubmit with revised pricing.",
+      ...computeSeedMargin(selectedItems),
     };
   })();
 
@@ -429,6 +456,7 @@ async function seedQuotes(Quote, User, Product, ProductLine) {
       hasScopeBasedItems: false,
       status: "Draft",
       ownerId: salesMgr._id,
+      ...computeSeedMargin(selectedItems),
     };
   })();
 
@@ -471,6 +499,7 @@ async function seedQuotes(Quote, User, Product, ProductLine) {
       hasScopeBasedItems: false,
       status: "Executive Review",
       ownerId: salesRep._id,
+      ...computeSeedMargin(selectedItems),
     };
   })();
 
@@ -511,6 +540,7 @@ async function seedQuotes(Quote, User, Product, ProductLine) {
       hasScopeBasedItems: false,
       status: "Manager Review",
       ownerId: salesMgr._id,
+      ...computeSeedMargin(selectedItems),
     };
   })();
 

@@ -770,6 +770,141 @@ describe("POST /api/quotes/:id/submit", () => {
   });
 });
 
+// ─── POST /api/quotes/:id/submit — margin routing (FR-MARGIN-4) ───────────────
+describe("POST /api/quotes/:id/submit — margin routing", () => {
+  function makeMarginItem({
+    adjustedPrice,
+    unitCost,
+    scopeBasedPricing = "None",
+  }) {
+    return {
+      productId: new (require("mongoose").Types.ObjectId)(),
+      productSnapshot: {
+        name: "Margin Test Product",
+        pricingModel: "PMPM",
+        basePrice: adjustedPrice,
+        unitCost,
+        scopeBasedPricing,
+      },
+      quantity: 1,
+      adjustmentDirection: null,
+      adjustmentType: null,
+      adjustmentValue: 0,
+      extendedPrice: adjustedPrice,
+      implementationFee: 0,
+      adjustedPrice,
+    };
+  }
+
+  beforeEach(async () => {
+    await Settings.create({
+      discountThresholds: {
+        managerReviewPercent: 10,
+        executiveReviewPercent: 25,
+      },
+      marginTargets: { global: { green: 50, yellow: 30 } },
+    });
+  });
+
+  // Edge case 2 — all scope-based → null margin → auto-approve (if discount ok)
+  it("auto-approves when all items are scope-based (null margin, no discount)", async () => {
+    const owner = await createUser("sales_rep");
+    const q = await createQuote(owner._id, {
+      selectedItems: [
+        makeMarginItem({
+          adjustedPrice: 1000,
+          unitCost: 200,
+          scopeBasedPricing: "All",
+        }),
+      ],
+    });
+    const res = await request(app)
+      .post(`/api/quotes/${q._id}/submit`)
+      .set(cookie("sales_rep", owner._id));
+    expect(res.status).toBe(200);
+    expect(res.body.data.status).toBe("Approved");
+    expect(res.body.data.marginPercent).toBeNull();
+    expect(res.body.data.marginStatus).toBeNull();
+  });
+
+  // Edge case 1 — zero-cost product → 100% margin → green → auto-approve
+  it("auto-approves when all products have zero cost (100% margin)", async () => {
+    const owner = await createUser("sales_rep");
+    const q = await createQuote(owner._id, {
+      selectedItems: [makeMarginItem({ adjustedPrice: 1000, unitCost: 0 })],
+    });
+    const res = await request(app)
+      .post(`/api/quotes/${q._id}/submit`)
+      .set(cookie("sales_rep", owner._id));
+    expect(res.status).toBe(200);
+    expect(res.body.data.status).toBe("Approved");
+    expect(res.body.data.marginPercent).toBe(100);
+    expect(res.body.data.marginStatus).toBe("green");
+  });
+
+  // Edge case 5 — margin yellow + no discount → Manager Review
+  it("routes to Manager Review when margin is yellow and no discount threshold exceeded", async () => {
+    const owner = await createUser("sales_rep");
+    // 40% margin — below green (50) but above yellow (30) → yellow
+    const q = await createQuote(owner._id, {
+      selectedItems: [makeMarginItem({ adjustedPrice: 1000, unitCost: 600 })], // 40% margin
+    });
+    const res = await request(app)
+      .post(`/api/quotes/${q._id}/submit`)
+      .set(cookie("sales_rep", owner._id));
+    expect(res.status).toBe(200);
+    expect(res.body.data.status).toBe("Manager Review");
+    expect(res.body.data.marginStatus).toBe("yellow");
+  });
+
+  it("routes to Executive Review when margin is red and no discount threshold exceeded", async () => {
+    const owner = await createUser("sales_rep");
+    // 20% margin — below yellow (30) → red
+    const q = await createQuote(owner._id, {
+      selectedItems: [makeMarginItem({ adjustedPrice: 1000, unitCost: 800 })], // 20% margin
+    });
+    const res = await request(app)
+      .post(`/api/quotes/${q._id}/submit`)
+      .set(cookie("sales_rep", owner._id));
+    expect(res.status).toBe(200);
+    expect(res.body.data.status).toBe("Executive Review");
+    expect(res.body.data.marginStatus).toBe("red");
+  });
+
+  // Edge case 4 — margin red + discount Manager Review → Executive Review wins
+  it("picks Executive Review when margin=red and discount=Manager Review", async () => {
+    const owner = await createUser("sales_rep");
+    // 20% margin (red) + 15% discount (Manager Review) → Executive Review wins
+    const items = [
+      makeMarginItem({ adjustedPrice: 850, unitCost: 680 }), // ~20% margin
+    ];
+    // Also embed a discount on the item via adjustmentValue
+    items[0].adjustmentDirection = "discount";
+    items[0].adjustmentType = "percentage";
+    items[0].adjustmentValue = 15;
+
+    const q = await createQuote(owner._id, { selectedItems: items });
+    const res = await request(app)
+      .post(`/api/quotes/${q._id}/submit`)
+      .set(cookie("sales_rep", owner._id));
+    expect(res.status).toBe(200);
+    expect(res.body.data.status).toBe("Executive Review");
+  });
+
+  it("stores marginPercent and marginStatus on quote after submit", async () => {
+    const owner = await createUser("sales_rep");
+    const q = await createQuote(owner._id, {
+      selectedItems: [makeMarginItem({ adjustedPrice: 1000, unitCost: 400 })], // 60% → green
+    });
+    const res = await request(app)
+      .post(`/api/quotes/${q._id}/submit`)
+      .set(cookie("sales_rep", owner._id));
+    expect(res.status).toBe(200);
+    expect(typeof res.body.data.marginPercent).toBe("number");
+    expect(res.body.data.marginStatus).toBe("green");
+  });
+});
+
 // ─── POST /api/quotes/:id/approve ─────────────────────────────────────────────
 describe("POST /api/quotes/:id/approve", () => {
   it("returns 401 when unauthenticated", async () => {

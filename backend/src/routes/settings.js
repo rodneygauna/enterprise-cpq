@@ -104,4 +104,39 @@ router.put(
   },
 );
 
+// ── PUT /api/settings/margin ──────────────────────────────────────────────────
+// admin / super_admin — configure margin scorecard thresholds.
+router.put(
+  "/margin",
+  authenticate,
+  requireRole(["admin", "super_admin"]),
+  [
+    body("marginTargets.global.green")
+      .optional()
+      .isFloat({ min: 0, max: 100 })
+      .withMessage("global.green must be 0–100"),
+    body("marginTargets.global.yellow")
+      .optional()
+      .isFloat({ min: 0, max: 100 })
+      .withMessage("global.yellow must be 0–100"),
+    body("marginTargets.productLines")
+      .optional()
+      .isObject()
+      .withMessage("productLines must be an object"),
+  ],
+  validate,
+  async (req, res, next) => {
+    try {
+      const fields = {};
+      if (req.body.marginTargets !== undefined) {
+        fields.marginTargets = req.body.marginTargets;
+      }
+      const settings = await updateSettings(fields);
+      res.json({ data: settings, error: null, meta: null });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
 module.exports = router;

@@ -199,3 +199,131 @@ describe("applyLineItemAdjustment", () => {
   it("returns base when no adjustment", () =>
     expect(applyLineItemAdjustment(10000, null)).toBe(10000));
 });
+
+// ── §7.9 computeMargin ────────────────────────────────────────────────────────
+import { computeMargin, resolveMarginStatus } from "../pricing";
+
+describe("computeMargin", () => {
+  function makeItem({
+    adjustedPrice,
+    unitCost,
+    quantity = 1,
+    scopeBasedPricing = "None",
+  }) {
+    return {
+      adjustedPrice,
+      quantity,
+      productSnapshot: { unitCost, scopeBasedPricing },
+    };
+  }
+
+  it("returns null marginPercent for empty array", () => {
+    const result = computeMargin([]);
+    expect(result.marginPercent).toBeNull();
+    expect(result.totalRevenue).toBe(0);
+  });
+
+  // Edge case 1 — zero-cost → 100%
+  it("returns 100% margin when unitCost is 0", () => {
+    const result = computeMargin([
+      makeItem({ adjustedPrice: 500, unitCost: 0 }),
+    ]);
+    expect(result.marginPercent).toBe(100);
+  });
+
+  // Edge case 2 — all scope-based → null
+  it("returns null marginPercent when all items are scopeBasedPricing=All", () => {
+    const result = computeMargin([
+      makeItem({
+        adjustedPrice: 1000,
+        unitCost: 200,
+        scopeBasedPricing: "All",
+      }),
+    ]);
+    expect(result.marginPercent).toBeNull();
+    expect(result.totalRevenue).toBe(0);
+  });
+
+  it("excludes scope-based items from revenue", () => {
+    const result = computeMargin([
+      makeItem({
+        adjustedPrice: 1000,
+        unitCost: 600,
+        scopeBasedPricing: "None",
+      }),
+      makeItem({
+        adjustedPrice: 2000,
+        unitCost: 400,
+        scopeBasedPricing: "All",
+      }),
+    ]);
+    expect(result.totalRevenue).toBe(1000);
+    expect(result.totalCost).toBe(600);
+    expect(result.marginPercent).toBe(40);
+  });
+
+  it("accounts for quantity in cost", () => {
+    const result = computeMargin([
+      makeItem({ adjustedPrice: 3000, unitCost: 500, quantity: 3 }),
+    ]);
+    expect(result.totalCost).toBe(1500);
+    expect(result.grossProfit).toBe(1500);
+    expect(result.marginPercent).toBe(50);
+  });
+
+  it("uses item.product as fallback when productSnapshot missing", () => {
+    const item = {
+      adjustedPrice: 1000,
+      quantity: 1,
+      product: { unitCost: 400, scopeBasedPricing: "None" },
+    };
+    const result = computeMargin([item]);
+    expect(result.marginPercent).toBe(60);
+  });
+});
+
+describe("resolveMarginStatus", () => {
+  const targets = { global: { green: 50, yellow: 30 } };
+
+  it("returns null for null marginPercent", () => {
+    expect(resolveMarginStatus(null, targets)).toBeNull();
+  });
+
+  it("returns green when margin >= green threshold", () => {
+    expect(resolveMarginStatus(50, targets)).toBe("green");
+    expect(resolveMarginStatus(75, targets)).toBe("green");
+  });
+
+  it("returns yellow when margin is between yellow and green thresholds", () => {
+    expect(resolveMarginStatus(30, targets)).toBe("yellow");
+    expect(resolveMarginStatus(49, targets)).toBe("yellow");
+  });
+
+  it("returns red when margin is below yellow threshold", () => {
+    expect(resolveMarginStatus(29, targets)).toBe("red");
+    expect(resolveMarginStatus(0, targets)).toBe("red");
+  });
+
+  // Edge case 3 — per-line override priority
+  it("uses the most restrictive per-line override (highest green)", () => {
+    const t = {
+      global: { green: 50, yellow: 30 },
+      productLines: {
+        "Line A": { green: 70, yellow: 50 },
+        "Line B": { green: 60, yellow: 40 },
+      },
+    };
+    // 65% > 60 but < 70 → yellow under Line A override
+    expect(resolveMarginStatus(65, t, ["Line A", "Line B"])).toBe("yellow");
+    // 72% >= 70 → green under most restrictive override
+    expect(resolveMarginStatus(72, t, ["Line A", "Line B"])).toBe("green");
+  });
+
+  it("falls back to global when no matching per-line override", () => {
+    const t = {
+      global: { green: 50, yellow: 30 },
+      productLines: { "Other Line": { green: 70, yellow: 50 } },
+    };
+    expect(resolveMarginStatus(55, t, ["My Line"])).toBe("green"); // >= 50 global green
+  });
+});

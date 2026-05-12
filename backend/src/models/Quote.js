@@ -14,6 +14,7 @@ const PENDING_APPROVAL_STATUSES = ["Manager Review", "Executive Review"];
 const ADJUSTMENT_DIRECTIONS = ["discount", "uplift"];
 const ADJUSTMENT_TYPES = ["percentage", "flat"];
 const GLOBAL_ADJUSTMENT_TYPES = ["discount", "surcharge"];
+const MARGIN_STATUSES = ["green", "yellow", "red"];
 
 // ── QuoteItem sub-schema ──────────────────────────────────────────────────────
 const quoteItemSchema = new mongoose.Schema(
@@ -128,6 +129,14 @@ const quoteSchema = new mongoose.Schema(
     },
     approvalComment: { type: String, trim: true, default: "" },
     salesforceOpportunityId: { type: String, trim: true, default: "" },
+
+    // Margin scoring (FR-MARGIN-1 / FR-MARGIN-3)
+    marginPercent: { type: Number, default: null },
+    marginStatus: {
+      type: String,
+      enum: [...MARGIN_STATUSES, null],
+      default: null,
+    },
   },
   { timestamps: true },
 );
@@ -144,3 +153,4 @@ module.exports.PENDING_APPROVAL_STATUSES = PENDING_APPROVAL_STATUSES;
 module.exports.ADJUSTMENT_DIRECTIONS = ADJUSTMENT_DIRECTIONS;
 module.exports.ADJUSTMENT_TYPES = ADJUSTMENT_TYPES;
 module.exports.GLOBAL_ADJUSTMENT_TYPES = GLOBAL_ADJUSTMENT_TYPES;
+module.exports.MARGIN_STATUSES = MARGIN_STATUSES;

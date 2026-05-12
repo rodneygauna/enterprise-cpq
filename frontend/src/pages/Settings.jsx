@@ -4,7 +4,9 @@ import {
   getSettings,
   updateSettings,
   updateDiscountSettings,
+  updateMarginSettings,
 } from "../api/settings";
+import { getProductLines } from "../api/productLines";
 import { useBranding } from "../context/BrandingContext";
 import { useAuth } from "../hooks/useAuth";
 import RequireRole from "../components/RequireRole";
@@ -67,6 +69,7 @@ export default function Settings() {
       <h1 className="h3 mb-4">Settings</h1>
       {isSuperAdmin && <SettingsForm />}
       <DiscountSettingsForm />
+      <MarginSettingsForm />
     </div>
   );
 }
@@ -524,6 +527,256 @@ function DiscountSettingsForm() {
 
       <button type="submit" className="btn btn-primary" disabled={saving}>
         {saving ? "Saving…" : "Save Discount Settings"}
+      </button>
+    </form>
+  );
+}
+
+// ── §7.9 Margin Scorecard Settings ────────────────────────────────────────────
+function MarginSettingsForm() {
+  const [globalGreen, setGlobalGreen] = useState(50);
+  const [globalYellow, setGlobalYellow] = useState(30);
+  // Per-line overrides: [{ name: string, green: number, yellow: number }]
+  const [lineOverrides, setLineOverrides] = useState([]);
+  const [availableLines, setAvailableLines] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    Promise.all([getSettings(), getProductLines()])
+      .then(([data, lines]) => {
+        const g = data.marginTargets?.global ?? {};
+        setGlobalGreen(g.green ?? 50);
+        setGlobalYellow(g.yellow ?? 30);
+
+        const overrides = [];
+        const lineMap = data.marginTargets?.productLines ?? {};
+        for (const [name, thresholds] of Object.entries(lineMap)) {
+          overrides.push({
+            name,
+            green: thresholds.green ?? 50,
+            yellow: thresholds.yellow ?? 30,
+          });
+        }
+        setLineOverrides(overrides);
+        setAvailableLines(lines || []);
+      })
+      .catch(() => toast.error("Failed to load margin settings."))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const addOverride = () => {
+    // Pick first available line not already in overrides
+    const usedNames = new Set(lineOverrides.map((o) => o.name));
+    const first = availableLines.find((l) => !usedNames.has(l.name));
+    setLineOverrides((prev) => [
+      ...prev,
+      { name: first?.name ?? "", green: 50, yellow: 30 },
+    ]);
+  };
+
+  const removeOverride = (idx) => {
+    setLineOverrides((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const updateOverride = (idx, field, value) => {
+    setLineOverrides((prev) =>
+      prev.map((o, i) =>
+        i === idx
+          ? {
+              ...o,
+              [field]:
+                field === "name" ? value : value === "" ? "" : Number(value),
+            }
+          : o,
+      ),
+    );
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      const productLines = {};
+      for (const ov of lineOverrides) {
+        if (ov.name) {
+          productLines[ov.name] = {
+            green: Number(ov.green) || 0,
+            yellow: Number(ov.yellow) || 0,
+          };
+        }
+      }
+      await updateMarginSettings({
+        marginTargets: {
+          global: {
+            green: Number(globalGreen) || 0,
+            yellow: Number(globalYellow) || 0,
+          },
+          productLines,
+        },
+      });
+      toast.success("Margin settings saved.");
+    } catch (err) {
+      toast.error(
+        err.response?.data?.error ?? "Failed to save margin settings.",
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div aria-live="polite" aria-busy="true">
+        <p>Loading margin settings…</p>
+      </div>
+    );
+  }
+
+  return (
+    <form
+      onSubmit={handleSubmit}
+      noValidate
+      aria-label="Margin scorecard settings"
+      className="mt-4"
+    >
+      <section aria-labelledby="margin-heading" className="mb-4">
+        <h2 id="margin-heading" className="h5 mb-3">
+          Margin Scorecard
+        </h2>
+        <p className="text-muted small mb-3">
+          Quotes below the yellow threshold route to Manager Review; below the
+          red threshold route to Executive Review.
+        </p>
+
+        <div className="row g-3 mb-4">
+          <div className="col-sm-4">
+            <label htmlFor="globalGreen" className="form-label">
+              Global green threshold (%)
+            </label>
+            <input
+              id="globalGreen"
+              type="number"
+              className="form-control"
+              min={0}
+              max={100}
+              step={0.1}
+              value={globalGreen}
+              onChange={(e) => setGlobalGreen(e.target.value)}
+              aria-describedby="green-hint"
+            />
+            <div id="green-hint" className="form-text">
+              Margin ≥ this % → green (healthy)
+            </div>
+          </div>
+
+          <div className="col-sm-4">
+            <label htmlFor="globalYellow" className="form-label">
+              Global yellow threshold (%)
+            </label>
+            <input
+              id="globalYellow"
+              type="number"
+              className="form-control"
+              min={0}
+              max={100}
+              step={0.1}
+              value={globalYellow}
+              onChange={(e) => setGlobalYellow(e.target.value)}
+              aria-describedby="yellow-hint"
+            />
+            <div id="yellow-hint" className="form-text">
+              Margin ≥ this % → yellow (Manager Review)
+            </div>
+          </div>
+        </div>
+
+        <h3 className="h6 mb-2">Per–Product Line Overrides</h3>
+        <p className="text-muted small mb-2">
+          Override global thresholds for specific product lines. The most
+          restrictive (highest green threshold) override applies.
+        </p>
+
+        {lineOverrides.length === 0 && (
+          <p className="text-muted small fst-italic">
+            No per-line overrides configured.
+          </p>
+        )}
+
+        {lineOverrides.map((ov, idx) => (
+          <div key={idx} className="row g-2 mb-2 align-items-end">
+            <div className="col-sm-4">
+              <label htmlFor={`line-name-${idx}`} className="form-label">
+                Product line
+              </label>
+              <select
+                id={`line-name-${idx}`}
+                className="form-select"
+                value={ov.name}
+                onChange={(e) => updateOverride(idx, "name", e.target.value)}
+                aria-label={`Product line for override ${idx + 1}`}
+              >
+                {availableLines.map((l) => (
+                  <option key={l._id} value={l.name}>
+                    {l.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="col-sm-2">
+              <label htmlFor={`line-green-${idx}`} className="form-label">
+                Green (%)
+              </label>
+              <input
+                id={`line-green-${idx}`}
+                type="number"
+                className="form-control"
+                min={0}
+                max={100}
+                step={0.1}
+                value={ov.green}
+                onChange={(e) => updateOverride(idx, "green", e.target.value)}
+              />
+            </div>
+            <div className="col-sm-2">
+              <label htmlFor={`line-yellow-${idx}`} className="form-label">
+                Yellow (%)
+              </label>
+              <input
+                id={`line-yellow-${idx}`}
+                type="number"
+                className="form-control"
+                min={0}
+                max={100}
+                step={0.1}
+                value={ov.yellow}
+                onChange={(e) => updateOverride(idx, "yellow", e.target.value)}
+              />
+            </div>
+            <div className="col-sm-2">
+              <button
+                type="button"
+                className="btn btn-outline-danger btn-sm"
+                onClick={() => removeOverride(idx)}
+                aria-label={`Remove override for ${ov.name || "row " + (idx + 1)}`}
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        ))}
+
+        <button
+          type="button"
+          className="btn btn-outline-secondary btn-sm mt-1"
+          onClick={addOverride}
+        >
+          + Add Override
+        </button>
+      </section>
+
+      <button type="submit" className="btn btn-primary" disabled={saving}>
+        {saving ? "Saving…" : "Save Margin Settings"}
       </button>
     </form>
   );

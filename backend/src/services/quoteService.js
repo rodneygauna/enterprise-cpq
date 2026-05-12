@@ -5,6 +5,13 @@ const {
   resolveApprovalTier,
 } = require("./discountService");
 const {
+  computeMargin,
+  resolveMarginThresholds,
+  resolveMarginStatus,
+  marginStatusToApprovalTier,
+  resolveHigherApprovalTier,
+} = require("./marginService");
+const {
   sendApprovalRequestEmail,
   sendApprovalDecisionEmail,
 } = require("../utils/email");
@@ -19,6 +26,19 @@ function resolveOwnerId(quote) {
   return quote.ownerId?._id
     ? quote.ownerId._id.toString()
     : quote.ownerId.toString();
+}
+
+// ── Margin helper (used at save time — settings-independent) ─────────────────
+// Computes margin using DEFAULT thresholds (50/30).  Full threshold-aware
+// routing only runs at submit time when we have the live settings document.
+function _computeQuoteMargin(quoteOrData) {
+  const items = quoteOrData.selectedItems ?? [];
+  const { marginPercent } = computeMargin(items);
+  const marginStatus = resolveMarginStatus(marginPercent, {
+    green: 50,
+    yellow: 30,
+  });
+  return { marginPercent, marginStatus };
 }
 
 // ── List quotes (role-scoped) ─────────────────────────────────────────────────
@@ -80,10 +100,13 @@ async function getQuote(id, user) {
 
 // ── Create quote ──────────────────────────────────────────────────────────────
 async function createQuote(data, user) {
+  const { marginPercent, marginStatus } = _computeQuoteMargin(data);
   const quote = new Quote({
     ...data,
     ownerId: user._id,
     status: "Draft",
+    marginPercent,
+    marginStatus,
   });
   await quote.save();
   return quote;
@@ -105,6 +128,12 @@ async function updateQuote(id, data, user) {
   // Prevent callers from reassigning ownership
   const { ownerId: _discard, ...safeData } = data;
   Object.assign(quote, safeData);
+
+  // Recompute margin whenever the quote is saved
+  const { marginPercent, marginStatus } = _computeQuoteMargin(quote);
+  quote.marginPercent = marginPercent;
+  quote.marginStatus = marginStatus;
+
   await quote.save();
   return quote;
 }
@@ -250,11 +279,32 @@ async function submitQuote(id, user) {
   }
 
   const settings = await getSettings();
+
+  // ── Discount tier (§7.8) ───────────────────────────────────────────────────
   const maxDiscount = computeMaxLineItemDiscountPercent(quote.selectedItems);
-  const tier = resolveApprovalTier(
+  const discountTier = resolveApprovalTier(
     maxDiscount,
     settings.discountThresholds ?? {},
   );
+
+  // ── Margin tier (§7.9) ────────────────────────────────────────────────────
+  const { marginPercent } = computeMargin(quote.selectedItems);
+  const activeLineNames = (quote.activeProductLineIds ?? []).map(
+    (l) => l.name ?? l,
+  );
+  const marginThresholds = resolveMarginThresholds(
+    activeLineNames,
+    settings.marginTargets,
+  );
+  const mStatus = resolveMarginStatus(marginPercent, marginThresholds);
+  const marginTier = marginStatusToApprovalTier(mStatus);
+
+  // Store margin on the quote
+  quote.marginPercent = marginPercent;
+  quote.marginStatus = mStatus;
+
+  // ── Determine final routing tier (higher of discount vs margin wins) ──────
+  const tier = resolveHigherApprovalTier(discountTier, marginTier);
 
   if (tier) {
     // Needs approval
@@ -263,7 +313,7 @@ async function submitQuote(id, user) {
     // Auto-approve — no threshold exceeded
     quote.status = "Approved";
     quote.approvedBy = null;
-    quote.approvalComment = "Auto-approved: no discount threshold exceeded.";
+    quote.approvalComment = "Auto-approved: no threshold exceeded.";
   }
 
   await quote.save();
