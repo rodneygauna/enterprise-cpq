@@ -9,7 +9,7 @@ const { getSettings, updateSettings } = require("../services/settingsService");
 // ── GET /api/settings ─────────────────────────────────────────────────────────
 // Public — no authentication required.
 // Returns current settings or creates defaults on first call.
-// Used by the frontend to bootstrap brand colors before the user logs in.
+// Used by the frontend to bootstrap branding before the user logs in.
 router.get("/", async (req, res, next) => {
   try {
     const settings = await getSettings();
@@ -32,24 +32,12 @@ router.put(
       .trim()
       .withMessage("Company name cannot be blank"),
     body("logoUrl").optional().isString(),
-    body("primaryColor")
-      .optional()
-      .matches(/^#[0-9a-fA-F]{6}$/)
-      .withMessage(
-        "primaryColor must be a valid 6-digit hex color (e.g. #0d6efd)",
-      ),
-    body("accentColor")
-      .optional()
-      .matches(/^#[0-9a-fA-F]{6}$/)
-      .withMessage(
-        "accentColor must be a valid 6-digit hex color (e.g. #6c757d)",
-      ),
   ],
   validate,
   async (req, res, next) => {
     try {
       // Only allow branding fields to be updated via this endpoint.
-      const ALLOWED = ["companyName", "logoUrl", "primaryColor", "accentColor"];
+      const ALLOWED = ["companyName", "logoUrl"];
       const fields = Object.fromEntries(
         Object.entries(req.body).filter(([k]) => ALLOWED.includes(k)),
       );

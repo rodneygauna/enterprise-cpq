@@ -335,3 +335,31 @@ h1, h2, h3, h4, h5, h6,
   --bs-table-bg: transparent;
   --bs-table-color: var(--bs-body-color);
 }
+
+/* ── 12. Tooltip overrides (FieldHelp component) ─────────────── */
+:root {
+  --bs-tooltip-max-width: 280px;
+}
+
+/* Inline info-icon button — vertically center on the text baseline */
+.field-help-btn {
+  color: var(--bs-secondary-color);
+  line-height: 1;
+  vertical-align: middle;
+  text-decoration: none;
+  font-size: 0.85em;
+  /* Remove default Bootstrap link hover underline */
+  background: none;
+}
+
+.field-help-btn:hover,
+.field-help-btn:focus-visible {
+  color: var(--bs-primary);
+  outline-offset: 2px;
+}
+
+/* Dark mode: use the lighter emphasis primary so the icon stays legible */
+[data-bs-theme="dark"] .field-help-btn:hover,
+[data-bs-theme="dark"] .field-help-btn:focus-visible {
+  color: var(--bs-primary-text-emphasis);
+}

@@ -2,8 +2,6 @@ const Settings = require("../models/Settings");
 
 const DEFAULTS = {
   companyName: "Enterprise CPQ",
-  primaryColor: "#0d6efd",
-  accentColor: "#6c757d",
 };
 
 /**

@@ -31,7 +31,9 @@ import { getSettings } from "../api/settings";
 import QuoteSummaryPanel from "../components/QuoteSummaryPanel";
 import MultiYearForecast from "../components/MultiYearForecast";
 import OffcanvasDrawer from "../components/OffcanvasDrawer";
+import FieldHelp from "../components/FieldHelp";
 import { useAuth } from "../hooks/useAuth";
+import { TOOLTIPS } from "../utils/tooltips";
 
 // ── Formatters ────────────────────────────────────────────────────────────────
 const USD = new Intl.NumberFormat("en-US", {
@@ -1100,6 +1102,7 @@ export default function QuoteBuilder() {
                       (required)
                     </span>
                   </label>
+                  <FieldHelp text={TOOLTIPS.quoteBuilder.clientName} />
                   <input
                     id="clientName"
                     type="text"
@@ -1127,6 +1130,7 @@ export default function QuoteBuilder() {
                   <label className="form-label" htmlFor="effectiveDate">
                     Effective Date
                   </label>
+                  <FieldHelp text={TOOLTIPS.quoteBuilder.effectiveDate} />
                   <input
                     id="effectiveDate"
                     type="date"
@@ -1140,6 +1144,7 @@ export default function QuoteBuilder() {
                   <label className="form-label" htmlFor="membershipCount">
                     Membership Count
                   </label>
+                  <FieldHelp text={TOOLTIPS.quoteBuilder.membershipCount} />
                   <input
                     id="membershipCount"
                     type="number"
@@ -1155,6 +1160,7 @@ export default function QuoteBuilder() {
                   <label className="form-label" htmlFor="termLength">
                     Term (months)
                   </label>
+                  <FieldHelp text={TOOLTIPS.quoteBuilder.termLength} />
                   <input
                     id="termLength"
                     type="number"
@@ -1172,6 +1178,7 @@ export default function QuoteBuilder() {
                   <label className="form-label" htmlFor="annualUplift">
                     Annual Uplift %
                   </label>
+                  <FieldHelp text={TOOLTIPS.quoteBuilder.annualUplift} />
                   <input
                     id="annualUplift"
                     type="number"

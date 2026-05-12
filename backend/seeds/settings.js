@@ -16,8 +16,6 @@ async function seedSettings(Settings) {
 
   await Settings.create({
     companyName: "Enterprise CPQ",
-    primaryColor: "#0d6efd",
-    accentColor: "#6c757d",
 
     discountThresholds: {
       managerReviewPercent: 10,

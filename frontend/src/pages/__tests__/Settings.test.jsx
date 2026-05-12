@@ -1,12 +1,11 @@
 /**
- * Settings page tests — covers FR-BRAND-1 through FR-BRAND-4 (frontend).
+ * Settings page tests — covers FR-BRAND-1, FR-BRAND-2 (frontend).
  *
  * Test coverage:
  *   - Renders branding form for super_admin
  *   - Blocks access for non-super_admin roles
  *   - Pre-fills form with loaded settings values
  *   - Shows inline validation error when company name is cleared
- *   - Shows inline validation error for invalid hex color
  *   - Clears validation error when user corrects the field
  *   - Does not call the API when validation fails
  *   - Shows success toast after a successful save
@@ -32,8 +31,7 @@ vi.mock("../../context/BrandingContext", () => ({
   useBranding: () => ({
     branding: {
       companyName: "Enterprise CPQ",
-      primaryColor: "#0d6efd",
-      accentColor: "#6c757d",
+      logoUrl: null,
     },
     setBranding: vi.fn(),
   }),
@@ -68,8 +66,6 @@ beforeEach(() => {
   vi.resetAllMocks();
   getSettings.mockResolvedValue({
     companyName: "Test Corp",
-    primaryColor: "#0d6efd",
-    accentColor: "#6c757d",
     logoUrl: null,
     discountThresholds: {
       managerReviewPercent: 10,
@@ -95,8 +91,6 @@ describe("Settings page", () => {
     await waitFor(() =>
       expect(screen.getByLabelText(/company name/i)).toBeInTheDocument(),
     );
-    expect(screen.getByLabelText("Primary Color")).toBeInTheDocument();
-    expect(screen.getByLabelText("Accent Color")).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /save settings/i }),
     ).toBeInTheDocument();
@@ -132,24 +126,6 @@ describe("Settings page", () => {
     expect(updateSettings).not.toHaveBeenCalled();
   });
 
-  it("shows inline error for an invalid hex color", async () => {
-    renderSettings("super_admin");
-    await waitFor(() => screen.getByDisplayValue("Test Corp"));
-
-    const hexInput = screen.getByLabelText(/primary color hex value/i);
-    await userEvent.clear(hexInput);
-    await userEvent.type(hexInput, "notacolor");
-    await userEvent.click(
-      screen.getByRole("button", { name: /save settings/i }),
-    );
-
-    expect(
-      screen.getByText(/must be a valid 6-digit hex color/i),
-    ).toBeInTheDocument();
-    expect(hexInput).toHaveAttribute("aria-invalid", "true");
-    expect(updateSettings).not.toHaveBeenCalled();
-  });
-
   it("clears inline validation error when the field is corrected", async () => {
     renderSettings("super_admin");
     await waitFor(() => screen.getByDisplayValue("Test Corp"));
@@ -170,8 +146,6 @@ describe("Settings page", () => {
   it("shows a success toast after a successful save", async () => {
     updateSettings.mockResolvedValue({
       companyName: "Updated Corp",
-      primaryColor: "#0d6efd",
-      accentColor: "#6c757d",
       logoUrl: null,
     });
 
@@ -237,8 +211,6 @@ describe("Settings — discount settings form", () => {
     });
     getSettings.mockResolvedValue({
       companyName: "Test Corp",
-      primaryColor: "#0d6efd",
-      accentColor: "#6c757d",
       logoUrl: null,
       discountThresholds: {
         managerReviewPercent: 10,

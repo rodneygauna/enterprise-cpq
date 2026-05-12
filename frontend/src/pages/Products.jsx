@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import OffcanvasDrawer from "../components/OffcanvasDrawer";
+import FieldHelp from "../components/FieldHelp";
+import { TOOLTIPS } from "../utils/tooltips";
 import { toast } from "react-toastify";
 import { useAuth } from "../hooks/useAuth";
 import RequireRole from "../components/RequireRole";
@@ -180,7 +182,9 @@ function TiersEditor({ tiers, onChange }) {
 
   return (
     <fieldset className="mb-2">
-      <legend className="fs-6 fw-semibold mb-1">Tiers</legend>
+      <legend className="fs-6 fw-semibold mb-1">
+        Tiers <FieldHelp text={TOOLTIPS.products.tiers} />
+      </legend>
       {tiers.length === 0 && (
         <p className="text-muted small">No tiers defined. Add one below.</p>
       )}
@@ -256,7 +260,9 @@ function VolumeBandsEditor({ bands, onChange }) {
 
   return (
     <fieldset className="mb-2">
-      <legend className="fs-6 fw-semibold mb-1">Volume Bands</legend>
+      <legend className="fs-6 fw-semibold mb-1">
+        Volume Bands <FieldHelp text={TOOLTIPS.products.volumeBands} />
+      </legend>
       {bands.length === 0 && (
         <p className="text-muted small">No bands defined. Add one below.</p>
       )}
@@ -779,6 +785,7 @@ function ProductsPanel() {
             <label htmlFor="p-sku" className="form-label">
               SKU
             </label>
+            <FieldHelp text={TOOLTIPS.products.sku} />
             <input
               id="p-sku"
               name="sku"
@@ -800,6 +807,7 @@ function ProductsPanel() {
             <label htmlFor="p-product-line" className="form-label">
               Product Line
             </label>
+            <FieldHelp text={TOOLTIPS.products.productLineId} />
             <select
               id="p-product-line"
               name="productLineId"
@@ -821,6 +829,7 @@ function ProductsPanel() {
             <label htmlFor="p-type" className="form-label">
               Type
             </label>
+            <FieldHelp text={TOOLTIPS.products.type} />
             <select
               id="p-type"
               name="type"
@@ -841,6 +850,7 @@ function ProductsPanel() {
             <label htmlFor="p-pricing-model" className="form-label">
               Pricing Model
             </label>
+            <FieldHelp text={TOOLTIPS.products.pricingModel} />
             <select
               id="p-pricing-model"
               name="pricingModel"
@@ -861,6 +871,7 @@ function ProductsPanel() {
             <label htmlFor="p-pricing-strategy" className="form-label">
               Pricing Strategy
             </label>
+            <FieldHelp text={TOOLTIPS.products.pricingStrategy} />
             <select
               id="p-pricing-strategy"
               name="pricingStrategy"
@@ -881,6 +892,7 @@ function ProductsPanel() {
             <label htmlFor="p-billing-type" className="form-label">
               Billing Type
             </label>
+            <FieldHelp text={TOOLTIPS.products.billingType} />
             <select
               id="p-billing-type"
               name="billingType"
@@ -901,6 +913,7 @@ function ProductsPanel() {
             <label htmlFor="p-scope" className="form-label">
               Scope-Based Pricing
             </label>
+            <FieldHelp text={TOOLTIPS.products.scopeBasedPricing} />
             <select
               id="p-scope"
               name="scopeBasedPricing"
@@ -921,6 +934,7 @@ function ProductsPanel() {
             <label htmlFor="p-base-price" className="form-label">
               Base Price
             </label>
+            <FieldHelp text={TOOLTIPS.products.basePrice} />
             <input
               id="p-base-price"
               name="basePrice"
@@ -946,6 +960,7 @@ function ProductsPanel() {
             <label htmlFor="p-unit-cost" className="form-label">
               Unit Cost
             </label>
+            <FieldHelp text={TOOLTIPS.products.unitCost} />
             <input
               id="p-unit-cost"
               name="unitCost"
@@ -966,6 +981,7 @@ function ProductsPanel() {
             <label htmlFor="p-impl-fee" className="form-label">
               Implementation Fee
             </label>
+            <FieldHelp text={TOOLTIPS.products.implementationFee} />
             <input
               id="p-impl-fee"
               name="implementationFee"
@@ -988,6 +1004,7 @@ function ProductsPanel() {
             <label htmlFor="p-overage" className="form-label">
               Overage Price
             </label>
+            <FieldHelp text={TOOLTIPS.products.overagePrice} />
             <input
               id="p-overage"
               name="overagePrice"
@@ -1017,6 +1034,7 @@ function ProductsPanel() {
               <label htmlFor="p-baseline" className="form-check-label">
                 Baseline Product
               </label>
+              <FieldHelp text={TOOLTIPS.products.isBaselineProduct} />
             </div>
             <div className="form-check">
               <input
@@ -1030,6 +1048,7 @@ function ProductsPanel() {
               <label htmlFor="p-qty-based" className="form-check-label">
                 Quantity Based
               </label>
+              <FieldHelp text={TOOLTIPS.products.isQuantityBased} />
             </div>
             <div className="form-check">
               <input
@@ -1043,6 +1062,7 @@ function ProductsPanel() {
               <label htmlFor="p-inherit-tiers" className="form-check-label">
                 Inherit Tier/Volumes from Core
               </label>
+              <FieldHelp text={TOOLTIPS.products.inheritTierVolumesFromCore} />
             </div>
           </div>
 
@@ -1069,6 +1089,7 @@ function ProductsPanel() {
             <label htmlFor="p-compatible-core" className="form-label">
               Compatible Core Products
             </label>
+            <FieldHelp text={TOOLTIPS.products.compatibleCoreIds} />
             <select
               id="p-compatible-core"
               multiple
@@ -1094,6 +1115,7 @@ function ProductsPanel() {
             <label htmlFor="p-recommended" className="form-label">
               Recommended Products
             </label>
+            <FieldHelp text={TOOLTIPS.products.recommendedProductIds} />
             <select
               id="p-recommended"
               multiple

@@ -146,10 +146,9 @@ and real-time financial calculations.
 
 #### 7.2 Company Branding & Settings
 
-- **FR-BRAND-1:** A Super Admin settings page to configure: Company Name, Logo (file upload), Primary
-  Brand Color (hex picker), Accent Brand Color (hex picker).
-- **FR-BRAND-2:** Brand settings applied globally via Bootstrap CSS custom properties — no hardcoded
-  colors in the frontend.
+- **FR-BRAND-1:** A Super Admin settings page to configure: Company Name and Logo (file upload).
+- **FR-BRAND-2:** The application uses Bootstrap 5 default colors throughout; brand color
+  customization is not supported. Company Name and Logo are the only configurable brand identity fields.
 - **FR-BRAND-3:** Default state is a neutral "Enterprise CPQ" identity with a placeholder logo until configured.
 
 ---
@@ -422,6 +421,61 @@ existing Bootstrap 5 dependency without replacing it or introducing a CSS prepro
 | ----------------- | ------------------------------------ |
 | `bootstrap-icons` | Icon set; imported via CSS font file |
 
+#### 7.13 Contextual Tooltips
+
+Adds a reusable `FieldHelp` component that renders an ℹ icon next to form field labels; hovering,
+focusing, or tapping the icon displays a plain-text Bootstrap 5 tooltip explaining the field's
+purpose and business significance. Establishes a tooltip convention all future phases must follow.
+
+- **FR-TTIP-1:** Every form input in the application whose purpose or business impact is not
+  immediately obvious must display a `FieldHelp` icon (`bi-info-circle`) immediately after its
+  `<label>` text.
+
+- **FR-TTIP-2:** The tooltip component must be activated by: mouse hover over the icon, keyboard
+  focus on the icon (via Tab), and touch tap on mobile devices.
+
+- **FR-TTIP-3:** The tooltip must be dismissible via: mouse-out, blur (keyboard), Escape key,
+  and second tap on mobile.
+
+- **FR-TTIP-4:** The tooltip trigger must be a `<button type="button">` element with
+  `aria-label="Help"` and `role="tooltip"` on the tooltip content container, linked via
+  `aria-describedby`, to meet WCAG 2.1 AA (Success Criteria 1.3.1, 4.1.2).
+
+- **FR-TTIP-5:** All tooltip text must be defined in a single central registry file
+  (`frontend/src/utils/tooltips.js`) exported as a `TOOLTIPS` object with namespaced sub-objects
+  per domain (e.g. `TOOLTIPS.quoteBuilder`, `TOOLTIPS.products`). No tooltip string may appear
+  inline in a component or page. Content must be plain text only (no HTML, images, or rich media).
+  The registry is not configurable via the Settings UI.
+
+- **FR-TTIP-6:** The implementation must use Bootstrap 5's built-in `Tooltip` JavaScript module
+  (already a project dependency). No additional npm packages may be added.
+
+- **FR-TTIP-7:** A tooltip convention document (`docs/TOOLTIP_CONVENTION.md`) must be created
+  and maintained, specifying the rule for when a `FieldHelp` is required and how to add one.
+
+- **FR-TTIP-8:** Tooltip coverage is required on, at minimum, the following fields:
+  - **Quote Builder:** `clientName`, `effectiveDate`, `membershipCount`, `termLength`,
+    `annualUplift`, `adjustmentDirection`, `adjustmentType`, `adjustmentValue`
+  - **Product Catalog:** `sku`, `productLineId`, `type`, `pricingModel`, `pricingStrategy`,
+    `billingType`, `basePrice`, `unitCost`, `implementationFee`, `overagePrice`,
+    `isBaselineProduct`, `isQuantityBased`, `inheritTierVolumesFromCore`, `tiers[]`,
+    `volumeBands[]`, `compatibleCoreIds`, `recommendedProductIds`
+  - **Settings:** `companyName`, `logoUrl`, `managerReviewPercent`, `executiveReviewPercent`,
+    margin `global.green`, margin `global.yellow`
+  - **Product Lines:** `name`, `displayColor`
+  - **Users:** `inviteEmail`, `inviteRole`
+
+- **FR-TTIP-9:** All new fields introduced in Phase 2 and Phase 3 must follow the same
+  tooltip convention; the convention document must be consulted when implementing any new form field.
+
+#### Cross-References — 7.13
+
+- Extends FR-AUTH-1 (login / register forms — existing `.form-text` hints remain; `FieldHelp`
+  added only where appropriate)
+- See also FR-PROD-1 through FR-PROD-4 (Product Catalog fields annotated per FR-TTIP-8)
+- See also FR-QUOTE-1 through FR-QUOTE-7 (Quote Builder fields annotated per FR-TTIP-8)
+- See also FR-BRAND-1 (Settings fields annotated per FR-TTIP-8)
+
 ---
 
 ## 8. Data Models (MongoDB Collections)
@@ -467,7 +521,7 @@ productLineIds[], hasScopeBasedItems, createdAt, updatedAt
 **`settings`** (singleton document)
 
 ```text
-id, companyName, logoUrl, primaryColor, accentColor,
+id, companyName, logoUrl,
 discountThresholds{managerReviewPercent, executiveReviewPercent},
 marginTargets{global{green, yellow}, productLines{...}},
 volumeDiscountRules[], salesforceConfig, smtpConfig

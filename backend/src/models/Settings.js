@@ -4,8 +4,6 @@ const settingsSchema = new mongoose.Schema(
   {
     companyName: { type: String, default: "Enterprise CPQ" },
     logoUrl: { type: String },
-    primaryColor: { type: String, default: "#0d6efd" },
-    accentColor: { type: String, default: "#6c757d" },
 
     // Phase 2 — Discount governance (stub fields, not exposed via API yet)
     discountThresholds: {

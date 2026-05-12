@@ -1,5 +1,5 @@
 /**
- * Settings route tests — covers FR-BRAND-1 through FR-BRAND-4,
+ * Settings route tests — covers FR-BRAND-1, FR-BRAND-2,
  *                         FR-DISC-1 (discount governance settings).
  * Uses mongodb-memory-server; no real DB connections.
  *
@@ -10,7 +10,6 @@
  *   - PUT returns 401 when unauthenticated
  *   - PUT returns 403 when role is not super_admin
  *   - PUT returns 200 and updates settings for super_admin
- *   - PUT returns 422 for invalid hex color value
  *   - PUT returns 422 when companyName is blank string
  *
  *   PUT /api/settings/discount
@@ -59,22 +58,18 @@ describe("GET /api/settings", () => {
 
     expect(res.status).toBe(200);
     expect(res.body.data.companyName).toBe("Enterprise CPQ");
-    expect(res.body.data.primaryColor).toBe("#0d6efd");
-    expect(res.body.data.accentColor).toBe("#6c757d");
     expect(res.body.error).toBeNull();
   });
 
   it("returns 200 with stored settings when they exist", async () => {
     await Settings.create({
       companyName: "Acme Health",
-      primaryColor: "#ff0000",
     });
 
     const res = await request(app).get("/api/settings");
 
     expect(res.status).toBe(200);
     expect(res.body.data.companyName).toBe("Acme Health");
-    expect(res.body.data.primaryColor).toBe("#ff0000");
   });
 
   it("does not require authentication (200 with no cookies)", async () => {
@@ -113,11 +108,10 @@ describe("PUT /api/settings", () => {
     const res = await request(app)
       .put("/api/settings")
       .set("Cookie", `access_token=${token}`)
-      .send({ companyName: "Updated Corp", primaryColor: "#123456" });
+      .send({ companyName: "Updated Corp" });
 
     expect(res.status).toBe(200);
     expect(res.body.data.companyName).toBe("Updated Corp");
-    expect(res.body.data.primaryColor).toBe("#123456");
     expect(res.body.error).toBeNull();
   });
 
@@ -131,18 +125,6 @@ describe("PUT /api/settings", () => {
 
     const stored = await Settings.findOne({});
     expect(stored.companyName).toBe("Persisted Corp");
-  });
-
-  it("returns 422 for invalid hex color", async () => {
-    const user = await createUser("super_admin");
-    const token = tokenFor("super_admin", user._id.toString());
-    const res = await request(app)
-      .put("/api/settings")
-      .set("Cookie", `access_token=${token}`)
-      .send({ primaryColor: "not-a-color" });
-
-    expect(res.status).toBe(422);
-    expect(res.body.errors).toBeDefined();
   });
 
   it("returns 422 when companyName is a blank string", async () => {

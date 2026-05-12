@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import RequireRole from "../components/RequireRole";
 import OffcanvasDrawer from "../components/OffcanvasDrawer";
+import FieldHelp from "../components/FieldHelp";
+import { TOOLTIPS } from "../utils/tooltips";
 import {
   getProductLines,
   createProductLine,
@@ -282,6 +284,7 @@ function ProductLinesPanel() {
               Name{" "}
               <span className="text-muted fw-normal small">(required)</span>
             </label>
+            <FieldHelp text={TOOLTIPS.productLines.name} />
             <input
               id="pl-name"
               name="name"
@@ -308,6 +311,7 @@ function ProductLinesPanel() {
               Display Color{" "}
               <span className="text-muted fw-normal small">(optional)</span>
             </label>
+            <FieldHelp text={TOOLTIPS.productLines.displayColor} />
             <div className="d-flex align-items-center gap-2">
               <input
                 id="pl-color"

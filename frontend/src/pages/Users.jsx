@@ -11,6 +11,8 @@ import { toast } from "react-toastify";
 import { useAuth } from "../hooks/useAuth";
 import RequireRole from "../components/RequireRole";
 import OffcanvasDrawer from "../components/OffcanvasDrawer";
+import FieldHelp from "../components/FieldHelp";
+import { TOOLTIPS } from "../utils/tooltips";
 import {
   getUsers,
   updateUserRole,
@@ -665,6 +667,7 @@ function UsersPanel() {
             <label className="form-label" htmlFor="inviteEmail">
               Email address
             </label>
+            <FieldHelp text={TOOLTIPS.users.inviteEmail} />
             <input
               id="inviteEmail"
               type="email"
@@ -695,6 +698,7 @@ function UsersPanel() {
             <label className="form-label" htmlFor="inviteRole">
               Role
             </label>
+            <FieldHelp text={TOOLTIPS.users.inviteRole} />
             <select
               id="inviteRole"
               className="form-select"

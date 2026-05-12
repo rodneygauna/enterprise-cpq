@@ -4,6 +4,8 @@
  * Pure presentational component — receives computed totals as props.
  * Covers FR-QUOTE-12 real-time financial summary display.
  */
+import FieldHelp from "./FieldHelp";
+import { TOOLTIPS } from "../utils/tooltips";
 const USD = new Intl.NumberFormat("en-US", {
   style: "currency",
   currency: "USD",
@@ -125,7 +127,10 @@ export default function QuoteSummaryPanel({
 
         {/* Global Adjustment (FR-QUOTE-11) */}
         <fieldset className="mb-3">
-          <legend className="small fw-semibold mb-2">Global Adjustment</legend>
+          <legend className="small fw-semibold mb-2">
+            Global Adjustment{" "}
+            <FieldHelp text={TOOLTIPS.quoteBuilder.adjustmentDirection} />
+          </legend>
           <div className="d-flex gap-1 mb-2">
             <select
               className="form-select form-select-sm"
@@ -139,7 +144,7 @@ export default function QuoteSummaryPanel({
             </select>
           </div>
           {globalAdjType && (
-            <div className="d-flex gap-1">
+            <div className="d-flex gap-1 align-items-center">
               <select
                 className="form-select form-select-sm"
                 style={{ maxWidth: 110 }}
@@ -150,6 +155,7 @@ export default function QuoteSummaryPanel({
                 <option value="percentage">%</option>
                 <option value="flat">$ Flat</option>
               </select>
+              <FieldHelp text={TOOLTIPS.quoteBuilder.adjustmentType} />
               <input
                 type="number"
                 className="form-control form-control-sm"
@@ -160,6 +166,7 @@ export default function QuoteSummaryPanel({
                 aria-label="Global adjustment value"
                 placeholder="0"
               />
+              <FieldHelp text={TOOLTIPS.quoteBuilder.adjustmentValue} />
             </div>
           )}
         </fieldset>
