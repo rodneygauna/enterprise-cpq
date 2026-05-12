@@ -13,7 +13,12 @@ import { useDarkMode } from "../hooks/useDarkMode";
  *   mobileOpen    {boolean}  — whether the mobile drawer is open
  *   onMobileClose {Function} — callback to close the mobile drawer
  */
-export default function Sidebar({ mobileOpen, onMobileClose }) {
+export default function Sidebar({
+  mobileOpen,
+  onMobileClose,
+  collapsed,
+  onToggleCollapse,
+}) {
   const { user, logout } = useAuth();
   const { branding } = useBranding();
   const { isDark, toggle } = useDarkMode();
@@ -61,29 +66,61 @@ export default function Sidebar({ mobileOpen, onMobileClose }) {
   function NavContent({ onClose }) {
     return (
       <div className="d-flex flex-column h-100 py-3 px-2">
-        {/* Brand name */}
-        <div className="px-2 mb-4">
-          <span
-            className="fw-bold fs-5 d-block"
-            style={{ fontFamily: "var(--cpq-font-heading)" }}
-          >
-            {branding.companyName}
-          </span>
+        {/* Brand name + collapse toggle */}
+        <div
+          className={`px-2 mb-4 d-flex align-items-center${collapsed ? " justify-content-center" : " justify-content-between"}`}
+        >
+          {!collapsed && (
+            <span
+              className="fw-bold fs-5"
+              style={{ fontFamily: "var(--cpq-font-heading)" }}
+            >
+              {branding.companyName}
+            </span>
+          )}
+          {onToggleCollapse && (
+            <button
+              type="button"
+              className="btn btn-sm btn-link p-1 text-body text-decoration-none"
+              onClick={onToggleCollapse}
+              aria-label={
+                collapsed ? "Expand navigation" : "Collapse navigation"
+              }
+              aria-expanded={!collapsed}
+              title={collapsed ? "Expand navigation" : "Collapse navigation"}
+            >
+              <i
+                className={`bi ${collapsed ? "bi-chevron-double-right" : "bi-chevron-double-left"} fs-6`}
+                aria-hidden="true"
+              />
+            </button>
+          )}
         </div>
 
         {/* Primary navigation */}
         <nav aria-label="Primary navigation">
           <ul className="list-unstyled mb-0 d-flex flex-column gap-1">
             <li>
-              <NavLink to="/" end className={linkClass} onClick={onClose}>
+              <NavLink
+                to="/"
+                end
+                className={linkClass}
+                onClick={onClose}
+                title={collapsed ? "Dashboard" : undefined}
+              >
                 <i className="bi bi-speedometer2" aria-hidden="true" />
-                Dashboard
+                <span className="cpq-nav-link-text">Dashboard</span>
               </NavLink>
             </li>
             <li>
-              <NavLink to="/quotes" className={linkClass} onClick={onClose}>
+              <NavLink
+                to="/quotes"
+                className={linkClass}
+                onClick={onClose}
+                title={collapsed ? "Quotes" : undefined}
+              >
                 <i className="bi bi-file-text" aria-hidden="true" />
-                Quotes
+                <span className="cpq-nav-link-text">Quotes</span>
               </NavLink>
             </li>
             {isApprover && (
@@ -92,9 +129,10 @@ export default function Sidebar({ mobileOpen, onMobileClose }) {
                   to="/approval-queue"
                   className={linkClass}
                   onClick={onClose}
+                  title={collapsed ? "Approval Queue" : undefined}
                 >
                   <i className="bi bi-clipboard-check" aria-hidden="true" />
-                  Approval Queue
+                  <span className="cpq-nav-link-text">Approval Queue</span>
                 </NavLink>
               </li>
             )}
@@ -105,9 +143,10 @@ export default function Sidebar({ mobileOpen, onMobileClose }) {
                     to="/admin/product-lines"
                     className={linkClass}
                     onClick={onClose}
+                    title={collapsed ? "Product Lines" : undefined}
                   >
                     <i className="bi bi-diagram-3" aria-hidden="true" />
-                    Product Lines
+                    <span className="cpq-nav-link-text">Product Lines</span>
                   </NavLink>
                 </li>
                 <li>
@@ -115,9 +154,10 @@ export default function Sidebar({ mobileOpen, onMobileClose }) {
                     to="/admin/products"
                     className={linkClass}
                     onClick={onClose}
+                    title={collapsed ? "Products" : undefined}
                   >
                     <i className="bi bi-box-seam" aria-hidden="true" />
-                    Products
+                    <span className="cpq-nav-link-text">Products</span>
                   </NavLink>
                 </li>
                 <li>
@@ -125,9 +165,10 @@ export default function Sidebar({ mobileOpen, onMobileClose }) {
                     to="/admin/users"
                     className={linkClass}
                     onClick={onClose}
+                    title={collapsed ? "Users" : undefined}
                   >
                     <i className="bi bi-people" aria-hidden="true" />
-                    Users
+                    <span className="cpq-nav-link-text">Users</span>
                   </NavLink>
                 </li>
                 <li>
@@ -135,9 +176,10 @@ export default function Sidebar({ mobileOpen, onMobileClose }) {
                     to="/settings"
                     className={linkClass}
                     onClick={onClose}
+                    title={collapsed ? "Settings" : undefined}
                   >
                     <i className="bi bi-gear" aria-hidden="true" />
-                    Settings
+                    <span className="cpq-nav-link-text">Settings</span>
                   </NavLink>
                 </li>
               </>
@@ -150,14 +192,18 @@ export default function Sidebar({ mobileOpen, onMobileClose }) {
 
         {/* Footer: dark mode toggle + user + sign out */}
         <div className="border-top pt-3 mt-3 d-flex flex-column gap-1">
-          <div className="d-flex align-items-center justify-content-between px-2 mb-1">
-            <span
-              className="small text-muted text-truncate"
-              style={{ maxWidth: "140px" }}
-              aria-live="polite"
-            >
-              {user?.firstName} {user?.lastName}
-            </span>
+          <div
+            className={`d-flex align-items-center px-2 mb-1${collapsed ? " justify-content-center" : " justify-content-between"}`}
+          >
+            {!collapsed && (
+              <span
+                className="small text-muted text-truncate"
+                style={{ maxWidth: "140px" }}
+                aria-live="polite"
+              >
+                {user?.firstName} {user?.lastName}
+              </span>
+            )}
             <button
               type="button"
               className="btn btn-sm btn-link p-1 text-body text-decoration-none"
@@ -176,9 +222,10 @@ export default function Sidebar({ mobileOpen, onMobileClose }) {
             type="button"
             className="cpq-nav-link border-0 bg-transparent w-100 text-start"
             onClick={handleLogout}
+            title={collapsed ? "Sign out" : undefined}
           >
             <i className="bi bi-box-arrow-right" aria-hidden="true" />
-            Sign out
+            <span className="cpq-nav-link-text">Sign out</span>
           </button>
         </div>
       </div>
@@ -189,7 +236,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }) {
     <>
       {/* ── Desktop sidebar (hidden on mobile) ──────────────────── */}
       <aside
-        className="cpq-sidebar cpq-glass d-none d-md-block"
+        className={`cpq-sidebar cpq-glass d-none d-md-block${collapsed ? " cpq-sidebar--collapsed" : ""}`}
         aria-label="Main navigation"
       >
         <NavContent onClose={undefined} />

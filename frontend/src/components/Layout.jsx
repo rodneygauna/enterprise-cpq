@@ -13,6 +13,7 @@ import Sidebar from "./Sidebar";
 export default function Layout() {
   const { branding } = useBranding();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   return (
     <>
@@ -26,6 +27,8 @@ export default function Layout() {
         <Sidebar
           mobileOpen={mobileNavOpen}
           onMobileClose={() => setMobileNavOpen(false)}
+          collapsed={sidebarCollapsed}
+          onToggleCollapse={() => setSidebarCollapsed((c) => !c)}
         />
 
         {/* Main content column */}

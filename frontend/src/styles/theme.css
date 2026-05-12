@@ -91,6 +91,28 @@ h1, h2, h3, h4, h5, h6,
   /* shadow instead of hard border on desktop */
   box-shadow: var(--cpq-shadow-sm);
   z-index: 100;
+  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+              min-width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Collapsed sidebar — icon-only */
+.cpq-sidebar--collapsed {
+  width: 64px;
+  min-width: 64px;
+}
+
+.cpq-sidebar--collapsed .cpq-nav-link {
+  justify-content: center;
+  padding: 0.5rem;
+  gap: 0;
+}
+
+.cpq-sidebar--collapsed .cpq-nav-link-text {
+  display: none;
+}
+
+.cpq-nav-link i {
+  flex-shrink: 0;
 }
 
 /* Main content area */
