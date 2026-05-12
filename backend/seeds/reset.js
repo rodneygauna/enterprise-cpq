@@ -7,7 +7,11 @@ require("dotenv").config();
 const mongoose = require("mongoose");
 
 const User = require("../src/models/User");
+const ProductLine = require("../src/models/ProductLine");
+const Product = require("../src/models/Product");
 const seedUsers = require("./users");
+const seedProductLines = require("./productLines");
+const { seedProductCatalog } = require("./productCatalog");
 
 async function reset() {
   const { MONGO_HOST, MONGO_USER, MONGO_PASS, MONGO_DATABASE } = process.env;
@@ -29,9 +33,13 @@ async function reset() {
 
   console.log("Dropping all collections...");
   await User.deleteMany({});
+  await ProductLine.deleteMany({});
+  await Product.deleteMany({});
 
   console.log("Re-seeding...");
   await seedUsers(User);
+  await seedProductLines(ProductLine);
+  await seedProductCatalog(Product, ProductLine);
 
   console.log("\nReset complete.");
   await mongoose.disconnect();

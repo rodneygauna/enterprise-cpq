@@ -3,11 +3,7 @@
  * Generic examples — no real company names or proprietary data.
  */
 const productLines = [
-  { name: "Care Management", displayColor: "#0d6efd", sortOrder: 0 },
-  { name: "Behavioral Health", displayColor: "#198754", sortOrder: 1 },
-  { name: "Pharmacy Benefits", displayColor: "#dc3545", sortOrder: 2 },
-  { name: "Dental & Vision", displayColor: "#fd7e14", sortOrder: 3 },
-  { name: "Wellness Programs", displayColor: "#6f42c1", sortOrder: 4 },
+  { name: "Health Portals", displayColor: "#fd7e14", sortOrder: 0 },
 ];
 
 /**
