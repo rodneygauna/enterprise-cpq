@@ -4,9 +4,11 @@ const mongoose = require("mongoose");
 const User = require("../src/models/User");
 const ProductLine = require("../src/models/ProductLine");
 const Product = require("../src/models/Product");
+const Quote = require("../src/models/Quote");
 const seedUsers = require("./users");
 const seedProductLines = require("./productLines");
 const { seedProductCatalog } = require("./productCatalog");
+const seedQuotes = require("./quotes");
 
 async function seed() {
   const { MONGO_HOST, MONGO_USER, MONGO_PASS, MONGO_DATABASE } = process.env;
@@ -25,6 +27,7 @@ async function seed() {
   await seedUsers(User);
   await seedProductLines(ProductLine);
   await seedProductCatalog(Product, ProductLine);
+  await seedQuotes(Quote, User, Product, ProductLine);
 
   console.log("\nSeeding complete.");
   await mongoose.disconnect();
