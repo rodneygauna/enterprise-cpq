@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import { useBranding } from "../context/BrandingContext";
 import Sidebar from "./Sidebar";
+import { useSidebarCollapsed } from "../hooks/useSidebarCollapsed";
 
 /**
  * Root layout: persistent sidebar navigation + main content area.
@@ -13,7 +14,8 @@ import Sidebar from "./Sidebar";
 export default function Layout() {
   const { branding } = useBranding();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const { collapsed: sidebarCollapsed, toggle: toggleSidebar } =
+    useSidebarCollapsed();
 
   return (
     <>
@@ -28,7 +30,7 @@ export default function Layout() {
           mobileOpen={mobileNavOpen}
           onMobileClose={() => setMobileNavOpen(false)}
           collapsed={sidebarCollapsed}
-          onToggleCollapse={() => setSidebarCollapsed((c) => !c)}
+          onToggleCollapse={toggleSidebar}
         />
 
         {/* Main content column */}
