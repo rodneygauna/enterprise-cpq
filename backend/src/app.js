@@ -29,26 +29,13 @@ app.use(cookieParser());
 // Passport (JWT strategy — no session)
 app.use(passport.initialize());
 
-// Rate limiting on authentication endpoints (OWASP A07 brute-force protection)
-// Disabled in the test environment so Jest suites never hit the limit.
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 20,
-  standardHeaders: true,
-  legacyHeaders: false,
-  skip: () => process.env.NODE_ENV === "test",
-  message: {
-    data: null,
-    error: "Too many requests. Please try again later.",
-    meta: null,
-  },
-});
-
 // Routes
-app.use("/api/auth", authLimiter, require("./routes/auth"));
+app.use("/api/auth", require("./routes/auth"));
 app.use("/api/settings", require("./routes/settings"));
 app.use("/api/product-lines", require("./routes/productLines"));
 app.use("/api/products", require("./routes/products"));
+app.use("/api/quotes", require("./routes/quotes"));
+app.use("/api/users", require("./routes/users"));
 
 // 404 handler
 app.use((req, res) => {

@@ -2,6 +2,7 @@ const express = require("express");
 const passport = require("passport");
 const { body } = require("express-validator");
 const jwt = require("jsonwebtoken");
+const rateLimit = require("express-rate-limit");
 
 const { authenticate } = require("../middleware/authenticate");
 const { validate } = require("../middleware/validate");
@@ -16,9 +17,26 @@ const User = require("../models/User");
 
 const router = express.Router();
 
+// Rate limiting on credential endpoints only (OWASP A07 brute-force protection).
+// /me, /refresh, /logout are excluded so normal app usage never hits the limit.
+// Disabled in the test environment so Jest suites are unaffected.
+const credentialLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: () => process.env.NODE_ENV === "test",
+  message: {
+    data: null,
+    error: "Too many requests. Please try again later.",
+    meta: null,
+  },
+});
+
 // ── POST /api/auth/register ───────────────────────────────────────────────────
 router.post(
   "/register",
+  credentialLimiter,
   [
     body("email")
       .isEmail()
@@ -45,6 +63,7 @@ router.post(
 // ── POST /api/auth/login ──────────────────────────────────────────────────────
 router.post(
   "/login",
+  credentialLimiter,
   [
     body("email")
       .isEmail()
@@ -113,6 +132,7 @@ router.get("/me", authenticate, (req, res) => {
 // ── POST /api/auth/forgot-password ────────────────────────────────────────────
 router.post(
   "/forgot-password",
+  credentialLimiter,
   [
     body("email")
       .isEmail()
@@ -141,6 +161,7 @@ router.post(
 // ── POST /api/auth/reset-password ─────────────────────────────────────────────
 router.post(
   "/reset-password",
+  credentialLimiter,
   [
     body("token").notEmpty().withMessage("Reset token is required"),
     body("password")
@@ -165,13 +186,11 @@ router.post(
 // ── GET /api/auth/salesforce ──────────────────────────────────────────────────
 router.get("/salesforce", (req, res, next) => {
   if (!process.env.SF_CONSUMER_KEY) {
-    return res
-      .status(501)
-      .json({
-        data: null,
-        error: "Salesforce OAuth is not configured",
-        meta: null,
-      });
+    return res.status(501).json({
+      data: null,
+      error: "Salesforce OAuth is not configured",
+      meta: null,
+    });
   }
   passport.authenticate("salesforce", {
     session: false,

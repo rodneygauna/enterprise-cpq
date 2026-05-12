@@ -17,6 +17,27 @@ async function seedUsers(User) {
       role: "super_admin",
     },
     {
+      email: "admin@example.com",
+      password: "Admin1234!",
+      firstName: "App",
+      lastName: "Admin",
+      role: "admin",
+    },
+    {
+      email: "executive@example.com",
+      password: "Exec1234!",
+      firstName: "Example",
+      lastName: "Executive",
+      role: "executive",
+    },
+    {
+      email: "salesmanager@example.com",
+      password: "Manager1234!",
+      firstName: "Sales",
+      lastName: "Manager",
+      role: "sales_manager",
+    },
+    {
       email: "salesrep@example.com",
       password: "SalesRep1234!",
       firstName: "Sales",

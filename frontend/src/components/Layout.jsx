@@ -64,6 +64,20 @@ export default function Layout() {
                   </NavLink>
                 </li>
 
+                <li className="nav-item">
+                  <NavLink
+                    to="/quotes"
+                    className={({ isActive }) =>
+                      "nav-link" + (isActive ? " active" : "")
+                    }
+                    aria-current={({ isActive }) =>
+                      isActive ? "page" : undefined
+                    }
+                  >
+                    Quotes
+                  </NavLink>
+                </li>
+
                 {["admin", "super_admin"].includes(user?.role) && (
                   <>
                     <li className="nav-item">
@@ -90,6 +104,19 @@ export default function Layout() {
                         }
                       >
                         Products
+                      </NavLink>
+                    </li>
+                    <li className="nav-item">
+                      <NavLink
+                        to="/admin/users"
+                        className={({ isActive }) =>
+                          "nav-link" + (isActive ? " active" : "")
+                        }
+                        aria-current={({ isActive }) =>
+                          isActive ? "page" : undefined
+                        }
+                      >
+                        Users
                       </NavLink>
                     </li>
                   </>

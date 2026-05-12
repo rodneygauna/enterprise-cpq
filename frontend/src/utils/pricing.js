@@ -219,3 +219,66 @@ export function calculateQuoteSummary(
     netTCV,
   };
 }
+
+/**
+ * Computes a year-by-year revenue breakdown for multi-year quotes (FR-QUOTE-13).
+ *
+ * - One-time fees (billingType "One-Time" or pricingModel "Flat Fee") appear in Year 1 only.
+ * - Recurring items get the annual uplift factor applied from Year 2 onwards.
+ *
+ * @param {Array} lineItems  - Same shape as calculateQuoteSummary lineItems
+ * @param {number} membershipCount
+ * @param {number} termMonths  - Total contract term; must be > 12 to produce output
+ * @param {number} annualUplift - Percentage uplift (e.g. 3 = 3%)
+ * @returns {Array<{year: number, revenue: number}>} Empty array if termMonths ≤ 12
+ */
+export function computeYearlySummary(
+  lineItems,
+  membershipCount,
+  termMonths,
+  annualUplift,
+) {
+  const numYears = Math.ceil(termMonths / 12);
+  if (numYears <= 1) return [];
+
+  const result = [];
+
+  for (let year = 1; year <= numYears; year++) {
+    const yearMonths = year < numYears ? 12 : termMonths % 12 || 12;
+    const upliftFactor = Math.pow(1 + (annualUplift || 0) / 100, year - 1);
+    let yearRevenue = 0;
+
+    for (const item of lineItems) {
+      const isOneTime =
+        item.product.billingType === "One-Time" ||
+        item.product.pricingModel === "Flat Fee";
+
+      if (isOneTime) {
+        if (year === 1) {
+          const { extendedPrice } = calculateLineItem(item.product, {
+            ...item.params,
+            membershipCount,
+          });
+          const adjusted = item.adjustment
+            ? applyLineItemAdjustment(extendedPrice, item.adjustment)
+            : extendedPrice;
+          yearRevenue += adjusted;
+        }
+      } else {
+        const { extendedPrice } = calculateLineItem(item.product, {
+          ...item.params,
+          membershipCount,
+          termMonths: yearMonths,
+        });
+        const adjusted = item.adjustment
+          ? applyLineItemAdjustment(extendedPrice, item.adjustment)
+          : extendedPrice;
+        yearRevenue += adjusted * upliftFactor;
+      }
+    }
+
+    result.push({ year, revenue: Math.round(yearRevenue * 100) / 100 });
+  }
+
+  return result;
+}
