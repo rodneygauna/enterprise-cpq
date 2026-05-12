@@ -39,7 +39,11 @@ vi.mock("../../context/BrandingContext", () => ({
 }));
 
 import { useAuth } from "../../hooks/useAuth";
-import { getSettings, updateSettings } from "../../api/settings";
+import {
+  getSettings,
+  updateSettings,
+  updateDiscountSettings,
+} from "../../api/settings";
 import { toast } from "react-toastify";
 import Settings from "../Settings";
 
@@ -82,10 +86,10 @@ describe("Settings page", () => {
     ).toBeInTheDocument();
   });
 
-  it("blocks non-super_admin users with an accessible warning", () => {
+  it("blocks non-admin users with a permission message", () => {
     renderSettings("sales_rep");
 
-    expect(screen.getByRole("alert")).toHaveTextContent(/access denied/i);
+    expect(screen.getByText(/do not have permission/i)).toBeInTheDocument();
     expect(screen.queryByLabelText(/company name/i)).not.toBeInTheDocument();
   });
 
@@ -201,6 +205,73 @@ describe("Settings page", () => {
 
     await waitFor(() =>
       expect(toast.error).toHaveBeenCalledWith("Failed to save settings."),
+    );
+  });
+});
+
+// ─── Discount Settings form (§7.8) ───────────────────────────────────────────
+describe("Settings — discount settings form", () => {
+  beforeEach(() => {
+    updateDiscountSettings.mockResolvedValue({
+      discountThresholds: {
+        managerReviewPercent: 12,
+        executiveReviewPercent: 30,
+      },
+      volumeDiscountRules: [],
+    });
+    getSettings.mockResolvedValue({
+      companyName: "Test Corp",
+      primaryColor: "#0d6efd",
+      accentColor: "#6c757d",
+      logoUrl: null,
+      discountThresholds: {
+        managerReviewPercent: 10,
+        executiveReviewPercent: 25,
+      },
+      volumeDiscountRules: [],
+    });
+  });
+
+  it("renders discount section for admin role", async () => {
+    renderSettings("admin");
+    await waitFor(() =>
+      expect(screen.getByText(/manager review threshold/i)).toBeInTheDocument(),
+    );
+    expect(screen.getByText(/executive review threshold/i)).toBeInTheDocument();
+  });
+
+  it("does not render discount section for sales_rep", () => {
+    renderSettings("sales_rep");
+    expect(
+      screen.queryByText(/manager review threshold/i),
+    ).not.toBeInTheDocument();
+  });
+
+  it("calls updateDiscountSettings on save", async () => {
+    const user = userEvent.setup();
+    renderSettings("admin");
+    await screen.findByText(/manager review threshold/i);
+
+    await user.click(
+      screen.getByRole("button", { name: /save discount settings/i }),
+    );
+
+    await waitFor(() => expect(updateDiscountSettings).toHaveBeenCalled());
+  });
+
+  it("shows success toast after saving discount settings", async () => {
+    const user = userEvent.setup();
+    renderSettings("admin");
+    await screen.findByText(/manager review threshold/i);
+
+    await user.click(
+      screen.getByRole("button", { name: /save discount settings/i }),
+    );
+
+    await waitFor(() =>
+      expect(toast.success).toHaveBeenCalledWith(
+        expect.stringContaining("Discount"),
+      ),
     );
   });
 });

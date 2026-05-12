@@ -1,5 +1,6 @@
 /**
- * Settings route tests — covers FR-BRAND-1 through FR-BRAND-4.
+ * Settings route tests — covers FR-BRAND-1 through FR-BRAND-4,
+ *                         FR-DISC-1 (discount governance settings).
  * Uses mongodb-memory-server; no real DB connections.
  *
  * Test coverage:
@@ -11,6 +12,15 @@
  *   - PUT returns 200 and updates settings for super_admin
  *   - PUT returns 422 for invalid hex color value
  *   - PUT returns 422 when companyName is blank string
+ *
+ *   PUT /api/settings/discount
+ *   - returns 401 when unauthenticated
+ *   - returns 403 when sales_rep tries to update
+ *   - returns 403 when sales_manager tries to update
+ *   - returns 200 when admin updates thresholds
+ *   - returns 200 when super_admin updates thresholds
+ *   - returns 422 for managerReviewPercent out of range
+ *   - stores volumeDiscountRules array
  */
 
 const request = require("supertest");
@@ -144,5 +154,96 @@ describe("PUT /api/settings", () => {
       .send({ companyName: "" });
 
     expect(res.status).toBe(422);
+  });
+});
+
+// ─── PUT /api/settings/discount ───────────────────────────────────────────────
+describe("PUT /api/settings/discount", () => {
+  it("returns 401 when unauthenticated", async () => {
+    const res = await request(app)
+      .put("/api/settings/discount")
+      .send({ discountThresholds: { managerReviewPercent: 15 } });
+    expect(res.status).toBe(401);
+  });
+
+  it("returns 403 when sales_rep tries to update", async () => {
+    const user = await createUser("sales_rep");
+    const token = tokenFor("sales_rep", user._id.toString());
+    const res = await request(app)
+      .put("/api/settings/discount")
+      .set("Cookie", `access_token=${token}`)
+      .send({ discountThresholds: { managerReviewPercent: 15 } });
+    expect(res.status).toBe(403);
+  });
+
+  it("returns 403 when sales_manager tries to update", async () => {
+    const user = await createUser("sales_manager");
+    const token = tokenFor("sales_manager", user._id.toString());
+    const res = await request(app)
+      .put("/api/settings/discount")
+      .set("Cookie", `access_token=${token}`)
+      .send({ discountThresholds: { managerReviewPercent: 15 } });
+    expect(res.status).toBe(403);
+  });
+
+  it("returns 200 when admin updates discount thresholds", async () => {
+    const user = await createUser("admin");
+    const token = tokenFor("admin", user._id.toString());
+    const res = await request(app)
+      .put("/api/settings/discount")
+      .set("Cookie", `access_token=${token}`)
+      .send({
+        discountThresholds: {
+          managerReviewPercent: 12,
+          executiveReviewPercent: 30,
+        },
+      });
+    expect(res.status).toBe(200);
+    expect(res.body.data.discountThresholds.managerReviewPercent).toBe(12);
+    expect(res.body.data.discountThresholds.executiveReviewPercent).toBe(30);
+  });
+
+  it("returns 200 when super_admin updates discount thresholds", async () => {
+    const user = await createUser("super_admin");
+    const token = tokenFor("super_admin", user._id.toString());
+    const res = await request(app)
+      .put("/api/settings/discount")
+      .set("Cookie", `access_token=${token}`)
+      .send({
+        discountThresholds: {
+          managerReviewPercent: 8,
+          executiveReviewPercent: 20,
+        },
+      });
+    expect(res.status).toBe(200);
+    expect(res.body.data.discountThresholds.managerReviewPercent).toBe(8);
+  });
+
+  it("returns 422 for managerReviewPercent out of range (>100)", async () => {
+    const user = await createUser("admin");
+    const token = tokenFor("admin", user._id.toString());
+    const res = await request(app)
+      .put("/api/settings/discount")
+      .set("Cookie", `access_token=${token}`)
+      .send({
+        discountThresholds: { managerReviewPercent: 150 },
+      });
+    expect(res.status).toBe(422);
+  });
+
+  it("stores volumeDiscountRules array", async () => {
+    const user = await createUser("admin");
+    const token = tokenFor("admin", user._id.toString());
+    const rules = [
+      { membersThreshold: 50000, discountPercent: 5 },
+      { membersThreshold: 200000, discountPercent: 10 },
+    ];
+    const res = await request(app)
+      .put("/api/settings/discount")
+      .set("Cookie", `access_token=${token}`)
+      .send({ volumeDiscountRules: rules });
+    expect(res.status).toBe(200);
+    expect(res.body.data.volumeDiscountRules).toHaveLength(2);
+    expect(res.body.data.volumeDiscountRules[0].discountPercent).toBe(5);
   });
 });

@@ -1,9 +1,10 @@
 /**
- * Seed data for the quotes collection (§7.5 / §7.6).
+ * Seed data for the quotes collection (§7.5 / §7.6 / §7.8).
  *
- * Generates 5 representative quotes covering all statuses (Draft, Submitted,
- * Approved, Rejected) with a variety of membership sizes, term lengths,
- * product combinations, and adjustment scenarios.
+ * Generates 7 representative quotes covering all statuses (Draft,
+ * Manager Review, Executive Review, Approved, Rejected) with a variety of
+ * membership sizes, term lengths, product combinations, and adjustment
+ * scenarios — including two quotes pending in the approval queue.
  *
  * Financial totals are computed programmatically via the shared pricing
  * utility so the seed stays consistent if pricing logic ever changes.
@@ -269,15 +270,18 @@ async function seedQuotes(Quote, User, Product, ProductLine) {
     };
   })();
 
-  // ── Quote 2 — Lakeside Blue Cross (Submitted, 5% global discount) ─────────
+  // ── Quote 2 — Lakeside Blue Cross (Manager Review, 12% line-item discount) ──
   // Mid-size plan, 24-month term with 3% annual uplift, four products.
+  // A 12% discount on the Member Portal exceeds the 10% manager threshold,
+  // routing this quote to the sales manager approval queue.
   const q2 = (() => {
     const members = 85000;
     const term = 24;
     const uplift = 3;
+    const discount12 = { direction: "discount", type: "percentage", value: 12 };
     const lineItems = [
       { product: baseline, params: {} },
-      { product: memberPortal, params: {} },
+      { product: memberPortal, params: {}, adjustment: discount12 },
       { product: providerPortal, params: {} },
       { product: consumerSearch, params: {} },
     ];
@@ -286,7 +290,6 @@ async function seedQuotes(Quote, User, Product, ProductLine) {
       members,
       term,
     );
-    const globalAdjAmount = Math.round(summary.grossTCV * 0.05 * 100) / 100;
     return {
       clientName: "Lakeside Blue Cross",
       effectiveDate: new Date("2026-08-01"),
@@ -295,16 +298,16 @@ async function seedQuotes(Quote, User, Product, ProductLine) {
       annualUplift: uplift,
       selectedItems,
       activeProductLineIds: lineIds,
-      globalAdjustmentType: "discount",
+      globalAdjustmentType: null,
       globalDiscountType: "percentage",
-      globalDiscountValue: 5,
+      globalDiscountValue: 0,
       ...summary,
-      globalAdjustmentAmount: globalAdjAmount,
-      netTCV: Math.round((summary.grossTCV - globalAdjAmount) * 100) / 100,
+      globalAdjustmentAmount: 0,
+      netTCV: summary.grossTCV,
       yearlySummary: computeYearlySummary(lineItems, members, term, uplift),
       productLineIds: lineIds,
       hasScopeBasedItems: false,
-      status: "Submitted",
+      status: "Manager Review",
       ownerId: salesRep._id,
     };
   })();
@@ -429,8 +432,90 @@ async function seedQuotes(Quote, User, Product, ProductLine) {
     };
   })();
 
-  await Quote.insertMany([q1, q2, q3, q4, q5]);
-  console.log("  Quotes: inserted 5 records.");
+  // ── Quote 6 — Prairie States Health (Executive Review, 28% line-item discount)
+  // Large plan; the sales rep applied a 28% discount on all core products,
+  // exceeding the 25% executive threshold and routing to the executive queue.
+  const q6 = (() => {
+    const members = 175000;
+    const term = 24;
+    const uplift = 2;
+    const discount28 = { direction: "discount", type: "percentage", value: 28 };
+    const lineItems = [
+      { product: baseline, params: {} },
+      { product: memberPortal, params: {}, adjustment: discount28 },
+      { product: mobileApp, params: {} },
+      { product: providerPortal, params: {} },
+      { product: consumerSearch, params: {} },
+    ];
+    const { selectedItems, summary } = buildQuoteItems(
+      lineItems,
+      members,
+      term,
+    );
+    return {
+      clientName: "Prairie States Health",
+      effectiveDate: new Date("2026-10-01"),
+      membershipCount: members,
+      termLength: term,
+      annualUplift: uplift,
+      selectedItems,
+      activeProductLineIds: lineIds,
+      globalAdjustmentType: null,
+      globalDiscountType: "percentage",
+      globalDiscountValue: 0,
+      ...summary,
+      globalAdjustmentAmount: 0,
+      netTCV: summary.grossTCV,
+      yearlySummary: computeYearlySummary(lineItems, members, term, uplift),
+      productLineIds: lineIds,
+      hasScopeBasedItems: false,
+      status: "Executive Review",
+      ownerId: salesRep._id,
+    };
+  })();
+
+  // ── Quote 7 — Heartland Managed Care (Manager Review, 18% line-item discount)
+  // Mid-size plan owned by the sales manager; 18% discount on streaming content
+  // exceeds the 10% manager threshold, routing to manager approval queue.
+  const q7 = (() => {
+    const members = 62000;
+    const term = 12;
+    const discount18 = { direction: "discount", type: "percentage", value: 18 };
+    const lineItems = [
+      { product: baseline, params: {} },
+      { product: memberPortal, params: {} },
+      { product: streamingContent, params: {}, adjustment: discount18 },
+      { product: employerPortal, params: {} },
+    ];
+    const { selectedItems, summary } = buildQuoteItems(
+      lineItems,
+      members,
+      term,
+    );
+    return {
+      clientName: "Heartland Managed Care",
+      effectiveDate: new Date("2026-09-15"),
+      membershipCount: members,
+      termLength: term,
+      annualUplift: 0,
+      selectedItems,
+      activeProductLineIds: lineIds,
+      globalAdjustmentType: null,
+      globalDiscountType: "percentage",
+      globalDiscountValue: 0,
+      ...summary,
+      globalAdjustmentAmount: 0,
+      netTCV: summary.grossTCV,
+      yearlySummary: [],
+      productLineIds: lineIds,
+      hasScopeBasedItems: false,
+      status: "Manager Review",
+      ownerId: salesMgr._id,
+    };
+  })();
+
+  await Quote.insertMany([q1, q2, q3, q4, q5, q6, q7]);
+  console.log("  Quotes: inserted 7 records.");
 }
 
 module.exports = seedQuotes;

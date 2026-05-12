@@ -1,7 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import { toast } from "react-toastify";
-import { getSettings, updateSettings } from "../api/settings";
+import {
+  getSettings,
+  updateSettings,
+  updateDiscountSettings,
+} from "../api/settings";
 import { useBranding } from "../context/BrandingContext";
+import { useAuth } from "../hooks/useAuth";
 import RequireRole from "../components/RequireRole";
 
 function hexToRgb(hex) {
@@ -43,10 +48,26 @@ function validate(values) {
  *   - Accent brand color (Bootstrap --bs-secondary)
  */
 export default function Settings() {
+  const { user } = useAuth();
+  const isSuperAdmin = user?.role === "super_admin";
+  const isAdmin = user?.role === "admin" || isSuperAdmin;
+
+  if (!isAdmin) {
+    return (
+      <div className="container-fluid py-4">
+        <p className="text-muted">
+          You do not have permission to view this page.
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <RequireRole roles={["super_admin"]}>
-      <SettingsForm />
-    </RequireRole>
+    <div className="container-fluid py-4">
+      <h1 className="h3 mb-4">Settings</h1>
+      {isSuperAdmin && <SettingsForm />}
+      <DiscountSettingsForm />
+    </div>
   );
 }
 
@@ -134,164 +155,376 @@ function SettingsForm() {
 
   if (loading) {
     return (
-      <div className="container-fluid py-4" aria-live="polite" aria-busy="true">
+      <div aria-live="polite" aria-busy="true">
         <p>Loading settings…</p>
       </div>
     );
   }
 
   return (
-    <div className="container-fluid py-4">
-      <h1 className="h3 mb-4">Company Settings</h1>
+    <form
+      onSubmit={handleSubmit}
+      noValidate
+      aria-label="Company branding settings"
+    >
+      <section aria-labelledby="branding-heading" className="mb-4">
+        <h2 id="branding-heading" className="h5 mb-3">
+          Branding
+        </h2>
 
-      <form
-        onSubmit={handleSubmit}
-        noValidate
-        aria-label="Company branding settings"
-      >
-        <section aria-labelledby="branding-heading" className="mb-4">
-          <h2 id="branding-heading" className="h5 mb-3">
-            Branding
-          </h2>
+        {/* Company Name */}
+        <div className="mb-3">
+          <label htmlFor="companyName" className="form-label">
+            Company Name{" "}
+            <span className="text-muted fw-normal small">(required)</span>
+          </label>
+          <input
+            id="companyName"
+            name="companyName"
+            type="text"
+            className={`form-control${formErrors.companyName ? " is-invalid" : ""}`}
+            value={form.companyName}
+            onChange={handleChange}
+            required
+            aria-required="true"
+            aria-describedby={
+              formErrors.companyName ? "companyName-error" : undefined
+            }
+            aria-invalid={formErrors.companyName ? true : undefined}
+          />
+          {formErrors.companyName && (
+            <div id="companyName-error" className="invalid-feedback">
+              {formErrors.companyName}
+            </div>
+          )}
+        </div>
 
-          {/* Company Name */}
-          <div className="mb-3">
-            <label htmlFor="companyName" className="form-label">
-              Company Name{" "}
-              <span className="text-muted fw-normal small">(required)</span>
-            </label>
+        {/* Logo upload */}
+        <div className="mb-3">
+          <label htmlFor="logoUpload" className="form-label">
+            Company Logo
+          </label>
+          <input
+            id="logoUpload"
+            name="logoUpload"
+            type="file"
+            className="form-control"
+            accept="image/*"
+            ref={fileInputRef}
+            onChange={handleLogoChange}
+            aria-describedby="logo-hint"
+          />
+          <div id="logo-hint" className="form-text">
+            Accepted formats: PNG, JPG, SVG. Stored as Base64 in the database.
+          </div>
+          {preview && (
+            <div className="mt-2">
+              <img
+                src={preview}
+                alt="Company logo preview"
+                className="img-thumbnail"
+                style={{ maxHeight: "80px" }}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Primary color */}
+        <div className="mb-3">
+          <label htmlFor="primaryColor" className="form-label">
+            Primary Color
+          </label>
+          <div className="d-flex align-items-center gap-2">
             <input
-              id="companyName"
-              name="companyName"
-              type="text"
-              className={`form-control${formErrors.companyName ? " is-invalid" : ""}`}
-              value={form.companyName}
+              id="primaryColor"
+              name="primaryColor"
+              type="color"
+              className="form-control form-control-color"
+              value={form.primaryColor}
               onChange={handleChange}
-              required
-              aria-required="true"
-              aria-describedby={
-                formErrors.companyName ? "companyName-error" : undefined
-              }
-              aria-invalid={formErrors.companyName ? true : undefined}
+              title="Choose primary brand color"
             />
-            {formErrors.companyName && (
-              <div id="companyName-error" className="invalid-feedback">
-                {formErrors.companyName}
-              </div>
-            )}
+            <input
+              aria-label="Primary color hex value"
+              name="primaryColor"
+              type="text"
+              className={`form-control${formErrors.primaryColor ? " is-invalid" : ""}`}
+              style={{ maxWidth: "120px" }}
+              value={form.primaryColor}
+              onChange={handleChange}
+              pattern="^#[0-9a-fA-F]{6}$"
+              placeholder="#0d6efd"
+              aria-describedby={
+                formErrors.primaryColor ? "primaryColor-error" : undefined
+              }
+              aria-invalid={formErrors.primaryColor ? true : undefined}
+            />
           </div>
+          {formErrors.primaryColor && (
+            <div id="primaryColor-error" className="invalid-feedback d-block">
+              {formErrors.primaryColor}
+            </div>
+          )}
+        </div>
 
-          {/* Logo upload */}
-          <div className="mb-3">
-            <label htmlFor="logoUpload" className="form-label">
-              Company Logo
+        {/* Accent color */}
+        <div className="mb-3">
+          <label htmlFor="accentColor" className="form-label">
+            Accent Color
+          </label>
+          <div className="d-flex align-items-center gap-2">
+            <input
+              id="accentColor"
+              name="accentColor"
+              type="color"
+              className="form-control form-control-color"
+              value={form.accentColor}
+              onChange={handleChange}
+              title="Choose accent brand color"
+            />
+            <input
+              aria-label="Accent color hex value"
+              name="accentColor"
+              type="text"
+              className={`form-control${formErrors.accentColor ? " is-invalid" : ""}`}
+              style={{ maxWidth: "120px" }}
+              value={form.accentColor}
+              onChange={handleChange}
+              pattern="^#[0-9a-fA-F]{6}$"
+              placeholder="#6c757d"
+              aria-describedby={
+                formErrors.accentColor ? "accentColor-error" : undefined
+              }
+              aria-invalid={formErrors.accentColor ? true : undefined}
+            />
+          </div>
+          {formErrors.accentColor && (
+            <div id="accentColor-error" className="invalid-feedback d-block">
+              {formErrors.accentColor}
+            </div>
+          )}
+        </div>
+      </section>
+
+      <button type="submit" className="btn btn-primary" disabled={saving}>
+        {saving ? "Saving…" : "Save Settings"}
+      </button>
+    </form>
+  );
+}
+
+// ── Discount Threshold Settings (admin + super_admin) ────────────────────────
+function DiscountSettingsForm() {
+  const [thresholds, setThresholds] = useState({
+    managerReviewPercent: 10,
+    executiveReviewPercent: 25,
+  });
+  const [volumeRules, setVolumeRules] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    getSettings()
+      .then((data) => {
+        if (data.discountThresholds) {
+          setThresholds({
+            managerReviewPercent:
+              data.discountThresholds.managerReviewPercent ?? 10,
+            executiveReviewPercent:
+              data.discountThresholds.executiveReviewPercent ?? 25,
+          });
+        }
+        if (Array.isArray(data.volumeDiscountRules)) {
+          setVolumeRules(data.volumeDiscountRules);
+        }
+      })
+      .catch(() => toast.error("Failed to load discount settings."))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleThresholdChange = (e) => {
+    const { name, value } = e.target;
+    setThresholds((prev) => ({
+      ...prev,
+      [name]: value === "" ? "" : Number(value),
+    }));
+  };
+
+  const handleRuleChange = (idx, field, value) => {
+    setVolumeRules((prev) =>
+      prev.map((r, i) =>
+        i === idx ? { ...r, [field]: value === "" ? "" : Number(value) } : r,
+      ),
+    );
+  };
+
+  const addRule = () => {
+    setVolumeRules((prev) => [
+      ...prev,
+      { membersThreshold: 0, discountPercent: 0 },
+    ]);
+  };
+
+  const removeRule = (idx) => {
+    setVolumeRules((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      await updateDiscountSettings({
+        discountThresholds: thresholds,
+        volumeDiscountRules: volumeRules,
+      });
+      toast.success("Discount settings saved.");
+    } catch (err) {
+      toast.error(
+        err.response?.data?.error ?? "Failed to save discount settings.",
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div aria-live="polite" aria-busy="true">
+        <p>Loading discount settings…</p>
+      </div>
+    );
+  }
+
+  return (
+    <form
+      onSubmit={handleSubmit}
+      noValidate
+      aria-label="Discount governance settings"
+      className="mt-4"
+    >
+      <section aria-labelledby="discount-heading" className="mb-4">
+        <h2 id="discount-heading" className="h5 mb-3">
+          Discount Governance
+        </h2>
+        <p className="text-muted small mb-3">
+          Line-item discounts above these thresholds will route the quote to the
+          appropriate approver tier before it can be approved.
+        </p>
+
+        <div className="row g-3 mb-3">
+          <div className="col-sm-4">
+            <label htmlFor="managerReviewPercent" className="form-label">
+              Manager Review threshold (%)
             </label>
             <input
-              id="logoUpload"
-              name="logoUpload"
-              type="file"
+              id="managerReviewPercent"
+              name="managerReviewPercent"
+              type="number"
               className="form-control"
-              accept="image/*"
-              ref={fileInputRef}
-              onChange={handleLogoChange}
-              aria-describedby="logo-hint"
+              min={0}
+              max={100}
+              step={0.1}
+              value={thresholds.managerReviewPercent}
+              onChange={handleThresholdChange}
+              aria-describedby="mgr-hint"
             />
-            <div id="logo-hint" className="form-text">
-              Accepted formats: PNG, JPG, SVG. Stored as Base64 in the database.
+            <div id="mgr-hint" className="form-text">
+              Discount &gt; this % → Manager Review
             </div>
-            {preview && (
-              <div className="mt-2">
-                <img
-                  src={preview}
-                  alt="Company logo preview"
-                  className="img-thumbnail"
-                  style={{ maxHeight: "80px" }}
-                />
-              </div>
-            )}
           </div>
 
-          {/* Primary color */}
-          <div className="mb-3">
-            <label htmlFor="primaryColor" className="form-label">
-              Primary Color
+          <div className="col-sm-4">
+            <label htmlFor="executiveReviewPercent" className="form-label">
+              Executive Review threshold (%)
             </label>
-            <div className="d-flex align-items-center gap-2">
+            <input
+              id="executiveReviewPercent"
+              name="executiveReviewPercent"
+              type="number"
+              className="form-control"
+              min={0}
+              max={100}
+              step={0.1}
+              value={thresholds.executiveReviewPercent}
+              onChange={handleThresholdChange}
+              aria-describedby="exec-hint"
+            />
+            <div id="exec-hint" className="form-text">
+              Discount &gt; this % → Executive Review
+            </div>
+          </div>
+        </div>
+
+        <h3 className="h6 mb-2">Volume Discount Rules</h3>
+        <p className="text-muted small mb-2">
+          Automatically applied when total membership reaches a threshold.
+        </p>
+
+        {volumeRules.length === 0 && (
+          <p className="text-muted small fst-italic">
+            No volume discount rules configured.
+          </p>
+        )}
+
+        {volumeRules.map((rule, idx) => (
+          <div key={idx} className="row g-2 mb-2 align-items-end">
+            <div className="col-sm-4">
+              <label htmlFor={`membersThreshold-${idx}`} className="form-label">
+                Members threshold
+              </label>
               <input
-                id="primaryColor"
-                name="primaryColor"
-                type="color"
-                className="form-control form-control-color"
-                value={form.primaryColor}
-                onChange={handleChange}
-                title="Choose primary brand color"
-              />
-              <input
-                aria-label="Primary color hex value"
-                name="primaryColor"
-                type="text"
-                className={`form-control${formErrors.primaryColor ? " is-invalid" : ""}`}
-                style={{ maxWidth: "120px" }}
-                value={form.primaryColor}
-                onChange={handleChange}
-                pattern="^#[0-9a-fA-F]{6}$"
-                placeholder="#0d6efd"
-                aria-describedby={
-                  formErrors.primaryColor ? "primaryColor-error" : undefined
+                id={`membersThreshold-${idx}`}
+                type="number"
+                className="form-control"
+                min={0}
+                value={rule.membersThreshold}
+                onChange={(e) =>
+                  handleRuleChange(idx, "membersThreshold", e.target.value)
                 }
-                aria-invalid={formErrors.primaryColor ? true : undefined}
               />
             </div>
-            {formErrors.primaryColor && (
-              <div id="primaryColor-error" className="invalid-feedback d-block">
-                {formErrors.primaryColor}
-              </div>
-            )}
-          </div>
-
-          {/* Accent color */}
-          <div className="mb-3">
-            <label htmlFor="accentColor" className="form-label">
-              Accent Color
-            </label>
-            <div className="d-flex align-items-center gap-2">
+            <div className="col-sm-4">
+              <label htmlFor={`discountPercent-${idx}`} className="form-label">
+                Discount (%)
+              </label>
               <input
-                id="accentColor"
-                name="accentColor"
-                type="color"
-                className="form-control form-control-color"
-                value={form.accentColor}
-                onChange={handleChange}
-                title="Choose accent brand color"
-              />
-              <input
-                aria-label="Accent color hex value"
-                name="accentColor"
-                type="text"
-                className={`form-control${formErrors.accentColor ? " is-invalid" : ""}`}
-                style={{ maxWidth: "120px" }}
-                value={form.accentColor}
-                onChange={handleChange}
-                pattern="^#[0-9a-fA-F]{6}$"
-                placeholder="#6c757d"
-                aria-describedby={
-                  formErrors.accentColor ? "accentColor-error" : undefined
+                id={`discountPercent-${idx}`}
+                type="number"
+                className="form-control"
+                min={0}
+                max={100}
+                step={0.1}
+                value={rule.discountPercent}
+                onChange={(e) =>
+                  handleRuleChange(idx, "discountPercent", e.target.value)
                 }
-                aria-invalid={formErrors.accentColor ? true : undefined}
               />
             </div>
-            {formErrors.accentColor && (
-              <div id="accentColor-error" className="invalid-feedback d-block">
-                {formErrors.accentColor}
-              </div>
-            )}
+            <div className="col-sm-2">
+              <button
+                type="button"
+                className="btn btn-outline-danger btn-sm"
+                onClick={() => removeRule(idx)}
+                aria-label={`Remove volume rule ${idx + 1}`}
+              >
+                Remove
+              </button>
+            </div>
           </div>
-        </section>
+        ))}
 
-        <button type="submit" className="btn btn-primary" disabled={saving}>
-          {saving ? "Saving…" : "Save Settings"}
+        <button
+          type="button"
+          className="btn btn-outline-secondary btn-sm mt-1"
+          onClick={addRule}
+        >
+          + Add Rule
         </button>
-      </form>
-    </div>
+      </section>
+
+      <button type="submit" className="btn btn-primary" disabled={saving}>
+        {saving ? "Saving…" : "Save Discount Settings"}
+      </button>
+    </form>
   );
 }

@@ -20,7 +20,7 @@ router.get("/", async (req, res, next) => {
 });
 
 // ── PUT /api/settings ─────────────────────────────────────────────────────────
-// super_admin only — upserts the singleton settings document.
+// super_admin only — upserts branding fields.
 router.put(
   "/",
   authenticate,
@@ -49,9 +49,50 @@ router.put(
   async (req, res, next) => {
     try {
       // Only allow branding fields to be updated via this endpoint.
-      // Phase 2/3 config fields (discountThresholds, salesforceConfig, etc.)
-      // will be exposed via their own dedicated endpoints in future phases.
       const ALLOWED = ["companyName", "logoUrl", "primaryColor", "accentColor"];
+      const fields = Object.fromEntries(
+        Object.entries(req.body).filter(([k]) => ALLOWED.includes(k)),
+      );
+      const settings = await updateSettings(fields);
+      res.json({ data: settings, error: null, meta: null });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// ── PUT /api/settings/discount ────────────────────────────────────────────────
+// admin / super_admin — configure discount thresholds and volume discount rules.
+router.put(
+  "/discount",
+  authenticate,
+  requireRole(["admin", "super_admin"]),
+  [
+    body("discountThresholds.managerReviewPercent")
+      .optional()
+      .isFloat({ min: 0, max: 100 })
+      .withMessage("managerReviewPercent must be 0–100"),
+    body("discountThresholds.executiveReviewPercent")
+      .optional()
+      .isFloat({ min: 0, max: 100 })
+      .withMessage("executiveReviewPercent must be 0–100"),
+    body("volumeDiscountRules")
+      .optional()
+      .isArray()
+      .withMessage("volumeDiscountRules must be an array"),
+    body("volumeDiscountRules.*.membersThreshold")
+      .optional()
+      .isFloat({ min: 0 })
+      .withMessage("membersThreshold must be a non-negative number"),
+    body("volumeDiscountRules.*.discountPercent")
+      .optional()
+      .isFloat({ min: 0, max: 100 })
+      .withMessage("discountPercent must be 0–100"),
+  ],
+  validate,
+  async (req, res, next) => {
+    try {
+      const ALLOWED = ["discountThresholds", "volumeDiscountRules"];
       const fields = Object.fromEntries(
         Object.entries(req.body).filter(([k]) => ALLOWED.includes(k)),
       );

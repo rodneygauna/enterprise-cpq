@@ -27,6 +27,7 @@ import {
   getQuoteStats,
   deleteQuote,
   duplicateQuote,
+  submitQuote,
 } from "../api/quotes";
 import { getProductLines } from "../api/productLines";
 
@@ -56,7 +57,8 @@ function formatDate(iso) {
 // ── Status badge helper ───────────────────────────────────────────────────────
 const STATUS_CLASSES = {
   Draft: "secondary",
-  Submitted: "warning text-dark",
+  "Manager Review": "warning text-dark",
+  "Executive Review": "info text-dark",
   Approved: "success",
   Rejected: "danger",
 };
@@ -97,6 +99,9 @@ export default function QuoteDashboard() {
   // ── Delete modal (FR-DASH-2) ──────────────────────────────────────────────
   const [deleteTarget, setDeleteTarget] = useState(null); // quote object
   const [deleting, setDeleting] = useState(false);
+
+  // ── Submitting state ──────────────────────────────────────────────────────
+  const [submittingId, setSubmittingId] = useState(null);
 
   // ── Load product lines once for filter dropdown ───────────────────────────
   useEffect(() => {
@@ -193,6 +198,26 @@ export default function QuoteDashboard() {
       toast.error("Failed to delete quote.");
     } finally {
       setDeleting(false);
+    }
+  }
+
+  // ── Submit for approval flow ──────────────────────────────────────────────
+  async function handleSubmit(quote) {
+    setSubmittingId(quote._id);
+    try {
+      const updated = await submitQuote(quote._id);
+      const newStatus = updated.status;
+      if (newStatus === "Approved") {
+        toast.success(`"${quote.clientName}" was auto-approved.`);
+      } else {
+        toast.success(`"${quote.clientName}" submitted for ${newStatus}.`);
+      }
+      loadQuotes(appliedFilters, page);
+      loadStats();
+    } catch (err) {
+      toast.error(err?.response?.data?.error ?? "Failed to submit quote.");
+    } finally {
+      setSubmittingId(null);
     }
   }
 
@@ -405,7 +430,8 @@ export default function QuoteDashboard() {
                 >
                   <option value="">All Statuses</option>
                   <option value="Draft">Draft</option>
-                  <option value="Submitted">Submitted</option>
+                  <option value="Manager Review">Manager Review</option>
+                  <option value="Executive Review">Executive Review</option>
                   <option value="Approved">Approved</option>
                   <option value="Rejected">Rejected</option>
                 </select>
@@ -552,6 +578,19 @@ export default function QuoteDashboard() {
                           >
                             Open
                           </Link>
+                          {quote.status === "Draft" && (
+                            <button
+                              type="button"
+                              className="btn btn-outline-success btn-sm"
+                              onClick={() => handleSubmit(quote)}
+                              disabled={submittingId === quote._id}
+                              aria-label={`Submit quote for ${quote.clientName}`}
+                            >
+                              {submittingId === quote._id
+                                ? "Submitting…"
+                                : "Submit"}
+                            </button>
+                          )}
                           <button
                             type="button"
                             className="btn btn-outline-secondary btn-sm"

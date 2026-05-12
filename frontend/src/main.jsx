@@ -16,6 +16,7 @@ import ProductLines from "./pages/ProductLines";
 import Products from "./pages/Products";
 import QuoteBuilder from "./pages/QuoteBuilder";
 import QuoteDashboard from "./pages/QuoteDashboard";
+import ApprovalQueue from "./pages/ApprovalQueue";
 import Users from "./pages/Users";
 
 import "bootstrap/dist/css/bootstrap.min.css";
@@ -54,6 +55,7 @@ const router = createBrowserRouter(
         { path: "quotes", element: <QuoteDashboard /> },
         { path: "quotes/new", element: <QuoteBuilder /> },
         { path: "quotes/:id", element: <QuoteBuilder /> },
+        { path: "approval-queue", element: <ApprovalQueue /> },
         { path: "admin/users", element: <Users /> },
       ],
     },

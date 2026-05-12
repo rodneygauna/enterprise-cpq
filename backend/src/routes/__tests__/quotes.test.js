@@ -1,5 +1,6 @@
 /**
- * Quote route tests — covers FR-QUOTE-15 (save/load) and FR-QUOTE-16 (duplicate).
+ * Quote route tests — covers FR-QUOTE-15 (save/load), FR-QUOTE-16 (duplicate),
+ *                     and FR-DISC-3/4 (submit, approve, reject, approval queue).
  * Uses mongodb-memory-server; no real DB connections.
  *
  * Coverage:
@@ -48,6 +49,39 @@
  *     - 403 sales_rep cannot duplicate another user's quote
  *     - 201 + copy with "Copy of" prefix for owner
  *     - 201 + admin can duplicate any quote
+ *
+ *   POST /api/quotes/:id/submit
+ *     - 401 unauthenticated
+ *     - 404 not found
+ *     - 403 non-owner sales_rep cannot submit
+ *     - 400 when quote is not Draft (already submitted)
+ *     - 200 + auto-approved when no threshold exceeded
+ *     - 200 + Manager Review when discount exceeds manager threshold (boundary)
+ *     - 200 + Executive Review when discount exceeds executive threshold
+ *     - 200 + admin can submit any quote
+ *
+ *   POST /api/quotes/:id/approve
+ *     - 401 unauthenticated
+ *     - 403 sales_rep cannot approve
+ *     - 404 not found
+ *     - 400 when quote is not pending approval
+ *     - 403 sales_manager cannot approve Executive Review quote
+ *     - 200 + approved by executive
+ *     - 200 + comment stored on quote
+ *
+ *   POST /api/quotes/:id/reject
+ *     - 401 unauthenticated
+ *     - 403 sales_rep cannot reject
+ *     - 404 not found
+ *     - 400 when quote is not pending approval
+ *     - 200 + rejected with comment
+ *
+ *   GET /api/quotes/approval-queue
+ *     - 401 unauthenticated
+ *     - 403 sales_rep cannot access
+ *     - 200 + returns pending quotes for sales_manager
+ *     - 200 + returns both Manager Review and Executive Review quotes
+ *     - 200 + empty when no pending quotes
  */
 const request = require("supertest");
 const bcrypt = require("bcrypt");
@@ -55,6 +89,7 @@ const bcrypt = require("bcrypt");
 const app = require("../../app");
 const Quote = require("../../models/Quote");
 const User = require("../../models/User");
+const Settings = require("../../models/Settings");
 const {
   connect,
   clearDatabase,
@@ -318,9 +353,9 @@ describe("PUT /api/quotes/:id", () => {
     expect(res.status).toBe(403);
   });
 
-  it("returns 400 when non-admin attempts to edit a Submitted quote", async () => {
+  it("returns 400 when non-admin attempts to edit a pending quote", async () => {
     const owner = await createUser("sales_rep");
-    const q = await createQuote(owner._id, { status: "Submitted" });
+    const q = await createQuote(owner._id, { status: "Manager Review" });
 
     const res = await request(app)
       .put(`/api/quotes/${q._id}`)
@@ -344,7 +379,7 @@ describe("PUT /api/quotes/:id", () => {
   it("admin can update any quote regardless of status", async () => {
     const owner = await createUser("sales_rep");
     const admin = await createUser("admin");
-    const q = await createQuote(owner._id, { status: "Submitted" });
+    const q = await createQuote(owner._id, { status: "Manager Review" });
 
     const res = await request(app)
       .put(`/api/quotes/${q._id}`)
@@ -596,5 +631,355 @@ describe("GET /api/quotes/stats", () => {
     expect(res.status).toBe(200);
     expect(res.body.data.totalQuotes).toBe(1);
     expect(res.body.data.totalPipeline).toBe(20000);
+  });
+});
+
+// ─── Helpers for discount thresholds ─────────────────────────────────────────
+async function seedSettings(overrides = {}) {
+  return Settings.create({
+    discountThresholds: {
+      managerReviewPercent: 10,
+      executiveReviewPercent: 25,
+      ...overrides,
+    },
+  });
+}
+
+function makeDiscountItem(pct) {
+  return {
+    productId: new (require("mongoose").Types.ObjectId)(),
+    productSnapshot: { name: "Test", pricingModel: "PMPM", basePrice: 10 },
+    quantity: 1,
+    adjustmentDirection: "discount",
+    adjustmentType: "percentage",
+    adjustmentValue: pct,
+    extendedPrice: 100,
+    implementationFee: 0,
+    adjustedPrice: 100 * (1 - pct / 100),
+  };
+}
+
+// ─── POST /api/quotes/:id/submit ──────────────────────────────────────────────
+describe("POST /api/quotes/:id/submit", () => {
+  beforeEach(async () => seedSettings());
+
+  it("returns 401 when unauthenticated", async () => {
+    const owner = await createUser("sales_rep");
+    const q = await createQuote(owner._id);
+    const res = await request(app).post(`/api/quotes/${q._id}/submit`);
+    expect(res.status).toBe(401);
+  });
+
+  it("returns 404 when quote does not exist", async () => {
+    const user = await createUser("sales_rep");
+    const fakeId = new (require("mongoose").Types.ObjectId)();
+    const res = await request(app)
+      .post(`/api/quotes/${fakeId}/submit`)
+      .set(cookie("sales_rep", user._id));
+    expect(res.status).toBe(404);
+  });
+
+  it("returns 403 when non-owner sales_rep tries to submit", async () => {
+    const owner = await createUser("sales_rep");
+    const other = await createUser("sales_rep");
+    const q = await createQuote(owner._id);
+
+    const res = await request(app)
+      .post(`/api/quotes/${q._id}/submit`)
+      .set(cookie("sales_rep", other._id));
+    expect(res.status).toBe(403);
+  });
+
+  it("returns 400 when quote is not Draft", async () => {
+    const owner = await createUser("sales_rep");
+    const q = await createQuote(owner._id, { status: "Manager Review" });
+
+    const res = await request(app)
+      .post(`/api/quotes/${q._id}/submit`)
+      .set(cookie("sales_rep", owner._id));
+    expect(res.status).toBe(400);
+  });
+
+  it("auto-approves when no threshold is exceeded", async () => {
+    const owner = await createUser("sales_rep");
+    // 5% discount — below 10% manager threshold
+    const q = await createQuote(owner._id, {
+      selectedItems: [makeDiscountItem(5)],
+    });
+
+    const res = await request(app)
+      .post(`/api/quotes/${q._id}/submit`)
+      .set(cookie("sales_rep", owner._id));
+    expect(res.status).toBe(200);
+    expect(res.body.data.status).toBe("Approved");
+  });
+
+  it("routes to Manager Review when discount exactly at boundary (10% boundary → auto-approve)", async () => {
+    const owner = await createUser("sales_rep");
+    // exactly 10% = NOT > 10% → auto-approve
+    const q = await createQuote(owner._id, {
+      selectedItems: [makeDiscountItem(10)],
+    });
+
+    const res = await request(app)
+      .post(`/api/quotes/${q._id}/submit`)
+      .set(cookie("sales_rep", owner._id));
+    expect(res.status).toBe(200);
+    expect(res.body.data.status).toBe("Approved");
+  });
+
+  it("routes to Manager Review when discount exceeds manager threshold", async () => {
+    const owner = await createUser("sales_rep");
+    // 15% > 10% manager threshold
+    const q = await createQuote(owner._id, {
+      selectedItems: [makeDiscountItem(15)],
+    });
+
+    const res = await request(app)
+      .post(`/api/quotes/${q._id}/submit`)
+      .set(cookie("sales_rep", owner._id));
+    expect(res.status).toBe(200);
+    expect(res.body.data.status).toBe("Manager Review");
+  });
+
+  it("routes to Executive Review when discount exceeds executive threshold", async () => {
+    const owner = await createUser("sales_rep");
+    // 30% > 25% executive threshold
+    const q = await createQuote(owner._id, {
+      selectedItems: [makeDiscountItem(30)],
+    });
+
+    const res = await request(app)
+      .post(`/api/quotes/${q._id}/submit`)
+      .set(cookie("sales_rep", owner._id));
+    expect(res.status).toBe(200);
+    expect(res.body.data.status).toBe("Executive Review");
+  });
+
+  it("admin can submit any quote", async () => {
+    const owner = await createUser("sales_rep");
+    const admin = await createUser("admin");
+    const q = await createQuote(owner._id, {
+      selectedItems: [makeDiscountItem(5)],
+    });
+
+    const res = await request(app)
+      .post(`/api/quotes/${q._id}/submit`)
+      .set(cookie("admin", admin._id));
+    expect(res.status).toBe(200);
+  });
+});
+
+// ─── POST /api/quotes/:id/approve ─────────────────────────────────────────────
+describe("POST /api/quotes/:id/approve", () => {
+  it("returns 401 when unauthenticated", async () => {
+    const owner = await createUser("sales_rep");
+    const q = await createQuote(owner._id, { status: "Manager Review" });
+    const res = await request(app).post(`/api/quotes/${q._id}/approve`);
+    expect(res.status).toBe(401);
+  });
+
+  it("returns 403 when sales_rep tries to approve", async () => {
+    const owner = await createUser("sales_rep");
+    const rep2 = await createUser("sales_rep");
+    const q = await createQuote(owner._id, { status: "Manager Review" });
+
+    const res = await request(app)
+      .post(`/api/quotes/${q._id}/approve`)
+      .set(cookie("sales_rep", rep2._id));
+    expect(res.status).toBe(403);
+  });
+
+  it("returns 404 when quote does not exist", async () => {
+    const manager = await createUser("sales_manager");
+    const fakeId = new (require("mongoose").Types.ObjectId)();
+    const res = await request(app)
+      .post(`/api/quotes/${fakeId}/approve`)
+      .set(cookie("sales_manager", manager._id));
+    expect(res.status).toBe(404);
+  });
+
+  it("returns 400 when quote is not pending approval", async () => {
+    const owner = await createUser("sales_rep");
+    const manager = await createUser("sales_manager");
+    const q = await createQuote(owner._id, { status: "Draft" });
+
+    const res = await request(app)
+      .post(`/api/quotes/${q._id}/approve`)
+      .set(cookie("sales_manager", manager._id));
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 403 when sales_manager tries to approve an Executive Review quote", async () => {
+    const owner = await createUser("sales_rep");
+    const manager = await createUser("sales_manager");
+    const q = await createQuote(owner._id, { status: "Executive Review" });
+
+    const res = await request(app)
+      .post(`/api/quotes/${q._id}/approve`)
+      .set(cookie("sales_manager", manager._id));
+    expect(res.status).toBe(403);
+  });
+
+  it("executive can approve Manager Review quote", async () => {
+    const owner = await createUser("sales_rep");
+    const exec = await createUser("executive");
+    const q = await createQuote(owner._id, { status: "Manager Review" });
+
+    const res = await request(app)
+      .post(`/api/quotes/${q._id}/approve`)
+      .send({ comment: "Looks good." })
+      .set(cookie("executive", exec._id));
+    expect(res.status).toBe(200);
+    expect(res.body.data.status).toBe("Approved");
+    expect(res.body.data.approvalComment).toBe("Looks good.");
+    expect(res.body.data.approvedBy.toString()).toBe(exec._id.toString());
+  });
+
+  it("sales_manager can approve Manager Review quote", async () => {
+    const owner = await createUser("sales_rep");
+    const manager = await createUser("sales_manager");
+    const q = await createQuote(owner._id, { status: "Manager Review" });
+
+    const res = await request(app)
+      .post(`/api/quotes/${q._id}/approve`)
+      .set(cookie("sales_manager", manager._id));
+    expect(res.status).toBe(200);
+    expect(res.body.data.status).toBe("Approved");
+  });
+
+  it("prevents double-approval (400 when already Approved)", async () => {
+    const owner = await createUser("sales_rep");
+    const exec = await createUser("executive");
+    const q = await createQuote(owner._id, { status: "Approved" });
+
+    const res = await request(app)
+      .post(`/api/quotes/${q._id}/approve`)
+      .set(cookie("executive", exec._id));
+    expect(res.status).toBe(400);
+  });
+});
+
+// ─── POST /api/quotes/:id/reject ──────────────────────────────────────────────
+describe("POST /api/quotes/:id/reject", () => {
+  it("returns 401 when unauthenticated", async () => {
+    const owner = await createUser("sales_rep");
+    const q = await createQuote(owner._id, { status: "Manager Review" });
+    const res = await request(app).post(`/api/quotes/${q._id}/reject`);
+    expect(res.status).toBe(401);
+  });
+
+  it("returns 403 when sales_rep tries to reject", async () => {
+    const owner = await createUser("sales_rep");
+    const rep2 = await createUser("sales_rep");
+    const q = await createQuote(owner._id, { status: "Manager Review" });
+
+    const res = await request(app)
+      .post(`/api/quotes/${q._id}/reject`)
+      .set(cookie("sales_rep", rep2._id));
+    expect(res.status).toBe(403);
+  });
+
+  it("returns 404 when quote does not exist", async () => {
+    const exec = await createUser("executive");
+    const fakeId = new (require("mongoose").Types.ObjectId)();
+    const res = await request(app)
+      .post(`/api/quotes/${fakeId}/reject`)
+      .set(cookie("executive", exec._id));
+    expect(res.status).toBe(404);
+  });
+
+  it("returns 400 when quote is not pending approval", async () => {
+    const owner = await createUser("sales_rep");
+    const exec = await createUser("executive");
+    const q = await createQuote(owner._id, { status: "Draft" });
+
+    const res = await request(app)
+      .post(`/api/quotes/${q._id}/reject`)
+      .set(cookie("executive", exec._id));
+    expect(res.status).toBe(400);
+  });
+
+  it("rejects with comment and sets approvedBy", async () => {
+    const owner = await createUser("sales_rep");
+    const exec = await createUser("executive");
+    const q = await createQuote(owner._id, { status: "Executive Review" });
+
+    const res = await request(app)
+      .post(`/api/quotes/${q._id}/reject`)
+      .send({ comment: "Price too high." })
+      .set(cookie("executive", exec._id));
+    expect(res.status).toBe(200);
+    expect(res.body.data.status).toBe("Rejected");
+    expect(res.body.data.approvalComment).toBe("Price too high.");
+    expect(res.body.data.approvedBy.toString()).toBe(exec._id.toString());
+  });
+
+  it("sales_manager cannot reject Executive Review quote", async () => {
+    const owner = await createUser("sales_rep");
+    const manager = await createUser("sales_manager");
+    const q = await createQuote(owner._id, { status: "Executive Review" });
+
+    const res = await request(app)
+      .post(`/api/quotes/${q._id}/reject`)
+      .set(cookie("sales_manager", manager._id));
+    expect(res.status).toBe(403);
+  });
+});
+
+// ─── GET /api/quotes/approval-queue ───────────────────────────────────────────
+describe("GET /api/quotes/approval-queue", () => {
+  it("returns 401 when unauthenticated", async () => {
+    const res = await request(app).get("/api/quotes/approval-queue");
+    expect(res.status).toBe(401);
+  });
+
+  it("returns 403 when sales_rep requests queue", async () => {
+    const rep = await createUser("sales_rep");
+    const res = await request(app)
+      .get("/api/quotes/approval-queue")
+      .set(cookie("sales_rep", rep._id));
+    expect(res.status).toBe(403);
+  });
+
+  it("returns 200 + empty when no pending quotes", async () => {
+    const manager = await createUser("sales_manager");
+    const res = await request(app)
+      .get("/api/quotes/approval-queue")
+      .set(cookie("sales_manager", manager._id));
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual([]);
+    expect(res.body.meta.total).toBe(0);
+  });
+
+  it("returns pending quotes for sales_manager", async () => {
+    const owner = await createUser("sales_rep");
+    const manager = await createUser("sales_manager");
+    await createQuote(owner._id, {
+      status: "Manager Review",
+      clientName: "Pending Co",
+    });
+    await createQuote(owner._id, { status: "Draft", clientName: "Draft Co" });
+
+    const res = await request(app)
+      .get("/api/quotes/approval-queue")
+      .set(cookie("sales_manager", manager._id));
+    expect(res.status).toBe(200);
+    expect(res.body.data).toHaveLength(1);
+    expect(res.body.data[0].clientName).toBe("Pending Co");
+  });
+
+  it("returns both Manager Review and Executive Review quotes", async () => {
+    const owner = await createUser("sales_rep");
+    const exec = await createUser("executive");
+    await createQuote(owner._id, { status: "Manager Review" });
+    await createQuote(owner._id, { status: "Executive Review" });
+    await createQuote(owner._id, { status: "Approved" });
+
+    const res = await request(app)
+      .get("/api/quotes/approval-queue")
+      .set(cookie("executive", exec._id));
+    expect(res.status).toBe(200);
+    expect(res.body.data).toHaveLength(2);
   });
 });

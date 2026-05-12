@@ -1,5 +1,6 @@
 /**
- * QuoteDashboard page tests — covers §7.6 Quote History Dashboard (frontend).
+ * QuoteDashboard page tests — covers §7.6 Quote History Dashboard (frontend)
+ *                              and §7.8 Submit for Approval action.
  *
  * Test coverage:
  *   - Renders loading state while fetching quotes
@@ -19,6 +20,9 @@
  *   - Delete modal: Confirm calls deleteQuote and refreshes list
  *   - Pagination controls appear when total > 20
  *   - Stats bar charts container rendered when byLineCount data is present
+ *   - Submit button visible for Draft quotes
+ *   - Submit button hidden for non-Draft quotes
+ *   - Submit button calls submitQuote and shows success toast
  */
 import {
   render,
@@ -68,6 +72,7 @@ import {
   getQuoteStats,
   deleteQuote,
   duplicateQuote,
+  submitQuote,
 } from "../../api/quotes";
 import { getProductLines } from "../../api/productLines";
 import { toast } from "react-toastify";
@@ -138,6 +143,11 @@ beforeEach(() => {
   ]);
   deleteQuote.mockResolvedValue({ deleted: true });
   duplicateQuote.mockResolvedValue({ _id: "q-copy-1" });
+  submitQuote.mockResolvedValue({
+    _id: "q-1",
+    status: "Manager Review",
+    clientName: "Acme Corp",
+  });
 });
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
@@ -480,5 +490,85 @@ describe("QuoteDashboard — pagination", () => {
     expect(
       screen.queryByRole("navigation", { name: /quote list pagination/i }),
     ).not.toBeInTheDocument();
+  });
+});
+
+// ─── QuoteDashboard — Submit for Approval (§7.8) ──────────────────────────────
+describe("QuoteDashboard — submit for approval", () => {
+  it("shows Submit button for a Draft quote", async () => {
+    renderDashboard();
+    await screen.findByText("Acme Corp");
+    expect(
+      screen.getByRole("button", { name: /submit quote for acme corp/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("does not show Submit button for a non-Draft quote", async () => {
+    getQuotes.mockResolvedValue({
+      data: [{ ...SAMPLE_QUOTE, status: "Manager Review" }],
+      error: null,
+      meta: { page: 1, total: 1, limit: 20 },
+    });
+    renderDashboard();
+    await screen.findByText("Acme Corp");
+    expect(
+      screen.queryByRole("button", { name: /submit quote for acme corp/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("calls submitQuote and shows success toast on Manager Review routing", async () => {
+    const user = userEvent.setup();
+    renderDashboard();
+    await screen.findByText("Acme Corp");
+
+    const submitBtn = screen.getByRole("button", {
+      name: /submit quote for acme corp/i,
+    });
+    await user.click(submitBtn);
+
+    await waitFor(() => expect(submitQuote).toHaveBeenCalledWith("q-1"));
+    await waitFor(() =>
+      expect(toast.success).toHaveBeenCalledWith(
+        expect.stringContaining("Manager Review"),
+      ),
+    );
+  });
+
+  it("shows auto-approved toast when status is Approved after submit", async () => {
+    submitQuote.mockResolvedValue({
+      _id: "q-1",
+      status: "Approved",
+      clientName: "Acme Corp",
+    });
+    const user = userEvent.setup();
+    renderDashboard();
+    await screen.findByText("Acme Corp");
+
+    await user.click(
+      screen.getByRole("button", { name: /submit quote for acme corp/i }),
+    );
+
+    await waitFor(() =>
+      expect(toast.success).toHaveBeenCalledWith(
+        expect.stringContaining("auto-approved"),
+      ),
+    );
+  });
+
+  it("shows error toast when submitQuote fails", async () => {
+    submitQuote.mockRejectedValue({
+      response: { data: { error: "Submit failed" } },
+    });
+    const user = userEvent.setup();
+    renderDashboard();
+    await screen.findByText("Acme Corp");
+
+    await user.click(
+      screen.getByRole("button", { name: /submit quote for acme corp/i }),
+    );
+
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith("Submit failed"),
+    );
   });
 });

@@ -1,16 +1,22 @@
 /**
  * Quote routes — FR-QUOTE-15 (save/load), FR-QUOTE-16 (duplicate).
+ *                FR-DISC-3/4 (submit, approve, reject, approval queue).
  *
  * All routes require a valid JWT (authenticate).
  * Service layer enforces ownership / role-based access control.
  *
  * Endpoints:
- *   GET    /api/quotes         — list (role-scoped)
- *   GET    /api/quotes/:id     — get single
- *   POST   /api/quotes         — create new quote
- *   PUT    /api/quotes/:id     — update (owner if Draft, or admin)
- *   DELETE /api/quotes/:id     — delete (owner or admin)
- *   POST   /api/quotes/:id/duplicate — copy to new Draft
+ *   GET    /api/quotes                    — list (role-scoped)
+ *   GET    /api/quotes/stats              — dashboard stats
+ *   GET    /api/quotes/approval-queue     — quotes pending approval (manager+)
+ *   GET    /api/quotes/:id               — get single
+ *   POST   /api/quotes                    — create new quote
+ *   PUT    /api/quotes/:id               — update (owner if Draft, or admin)
+ *   DELETE /api/quotes/:id               — delete (owner or admin)
+ *   POST   /api/quotes/:id/duplicate     — copy to new Draft
+ *   POST   /api/quotes/:id/submit        — submit for approval (owner or admin)
+ *   POST   /api/quotes/:id/approve       — approve (manager/exec/admin)
+ *   POST   /api/quotes/:id/reject        — reject  (manager/exec/admin)
  */
 const router = require("express").Router();
 const { body, param, query } = require("express-validator");
@@ -26,6 +32,10 @@ const {
   deleteQuote,
   duplicateQuote,
   getQuoteStats,
+  submitQuote,
+  approveQuote,
+  rejectQuote,
+  listApprovalQueue,
 } = require("../services/quoteService");
 
 // ── Shared validation ─────────────────────────────────────────────────────────
@@ -136,6 +146,27 @@ router.get("/stats", authenticate, async (req, res, next) => {
   try {
     const stats = await getQuoteStats(req.user);
     res.json({ data: stats, error: null, meta: null });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ── GET /api/quotes/approval-queue ───────────────────────────────────────────
+// Registered before /:id so Express does not try to interpret "approval-queue"
+// as a MongoDB ObjectId.
+router.get("/approval-queue", authenticate, async (req, res, next) => {
+  try {
+    const result = await listApprovalQueue(req.user, req.query);
+    if (result.forbidden) {
+      return res
+        .status(403)
+        .json({ data: null, error: "Forbidden", meta: null });
+    }
+    res.json({
+      data: result.quotes,
+      error: null,
+      meta: { page: result.page, total: result.total, limit: result.limit },
+    });
   } catch (err) {
     next(err);
   }
@@ -255,6 +286,107 @@ router.post(
           .json({ data: null, error: "Forbidden", meta: null });
       }
       res.status(201).json({ data: result, error: null, meta: null });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// ── POST /api/quotes/:id/submit ───────────────────────────────────────────────
+router.post(
+  "/:id/submit",
+  authenticate,
+  mongoIdParam,
+  validate,
+  async (req, res, next) => {
+    try {
+      const result = await submitQuote(req.params.id, req.user);
+      if (!result) {
+        return res
+          .status(404)
+          .json({ data: null, error: "Quote not found", meta: null });
+      }
+      if (result.forbidden) {
+        return res
+          .status(403)
+          .json({ data: null, error: "Forbidden", meta: null });
+      }
+      if (result.badRequest) {
+        return res
+          .status(400)
+          .json({ data: null, error: result.badRequest, meta: null });
+      }
+      res.json({ data: result, error: null, meta: null });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// ── POST /api/quotes/:id/approve ──────────────────────────────────────────────
+router.post(
+  "/:id/approve",
+  authenticate,
+  [...mongoIdParam, body("comment").optional().isString().trim()],
+  validate,
+  async (req, res, next) => {
+    try {
+      const result = await approveQuote(
+        req.params.id,
+        req.user,
+        req.body.comment ?? "",
+      );
+      if (!result) {
+        return res
+          .status(404)
+          .json({ data: null, error: "Quote not found", meta: null });
+      }
+      if (result.forbidden) {
+        return res
+          .status(403)
+          .json({ data: null, error: "Forbidden", meta: null });
+      }
+      if (result.badRequest) {
+        return res
+          .status(400)
+          .json({ data: null, error: result.badRequest, meta: null });
+      }
+      res.json({ data: result, error: null, meta: null });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// ── POST /api/quotes/:id/reject ───────────────────────────────────────────────
+router.post(
+  "/:id/reject",
+  authenticate,
+  [...mongoIdParam, body("comment").optional().isString().trim()],
+  validate,
+  async (req, res, next) => {
+    try {
+      const result = await rejectQuote(
+        req.params.id,
+        req.user,
+        req.body.comment ?? "",
+      );
+      if (!result) {
+        return res
+          .status(404)
+          .json({ data: null, error: "Quote not found", meta: null });
+      }
+      if (result.forbidden) {
+        return res
+          .status(403)
+          .json({ data: null, error: "Forbidden", meta: null });
+      }
+      if (result.badRequest) {
+        return res
+          .status(400)
+          .json({ data: null, error: result.badRequest, meta: null });
+      }
+      res.json({ data: result, error: null, meta: null });
     } catch (err) {
       next(err);
     }

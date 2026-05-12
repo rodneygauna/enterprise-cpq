@@ -1,7 +1,16 @@
 const mongoose = require("mongoose");
 
 // ── Enums (mirrors PRD Section 8 / mongoose-models.instructions.md) ──────────
-const QUOTE_STATUSES = ["Draft", "Submitted", "Approved", "Rejected"];
+const QUOTE_STATUSES = [
+  "Draft",
+  "Manager Review",
+  "Executive Review",
+  "Approved",
+  "Rejected",
+];
+
+// Statuses that indicate a quote is awaiting approval action
+const PENDING_APPROVAL_STATUSES = ["Manager Review", "Executive Review"];
 const ADJUSTMENT_DIRECTIONS = ["discount", "uplift"];
 const ADJUSTMENT_TYPES = ["percentage", "flat"];
 const GLOBAL_ADJUSTMENT_TYPES = ["discount", "surcharge"];
@@ -131,6 +140,7 @@ quoteSchema.index({ createdAt: -1 });
 
 module.exports = mongoose.model("Quote", quoteSchema);
 module.exports.QUOTE_STATUSES = QUOTE_STATUSES;
+module.exports.PENDING_APPROVAL_STATUSES = PENDING_APPROVAL_STATUSES;
 module.exports.ADJUSTMENT_DIRECTIONS = ADJUSTMENT_DIRECTIONS;
 module.exports.ADJUSTMENT_TYPES = ADJUSTMENT_TYPES;
 module.exports.GLOBAL_ADJUSTMENT_TYPES = GLOBAL_ADJUSTMENT_TYPES;

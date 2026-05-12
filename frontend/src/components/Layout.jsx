@@ -78,6 +78,27 @@ export default function Layout() {
                   </NavLink>
                 </li>
 
+                {[
+                  "sales_manager",
+                  "executive",
+                  "admin",
+                  "super_admin",
+                ].includes(user?.role) && (
+                  <li className="nav-item">
+                    <NavLink
+                      to="/approval-queue"
+                      className={({ isActive }) =>
+                        "nav-link" + (isActive ? " active" : "")
+                      }
+                      aria-current={({ isActive }) =>
+                        isActive ? "page" : undefined
+                      }
+                    >
+                      Approval Queue
+                    </NavLink>
+                  </li>
+                )}
+
                 {["admin", "super_admin"].includes(user?.role) && (
                   <>
                     <li className="nav-item">
@@ -122,7 +143,7 @@ export default function Layout() {
                   </>
                 )}
 
-                {user?.role === "super_admin" && (
+                {["admin", "super_admin"].includes(user?.role) && (
                   <li className="nav-item">
                     <NavLink
                       to="/settings"

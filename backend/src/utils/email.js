@@ -90,4 +90,107 @@ async function sendInviteEmail(toEmail, rawToken, inviterName) {
   });
 }
 
-module.exports = { sendPasswordResetEmail, sendInviteEmail };
+/**
+ * Notifies approvers that a quote has been submitted for their review.
+ * Stub mode if SMTP_HOST is missing or NODE_ENV === "test".
+ *
+ * @param {object} quote   - Mongoose quote document (ownerId populated)
+ * @param {string} submitterName - Display name of the submitting user
+ * @param {string} tier    - "Manager Review" | "Executive Review"
+ */
+async function sendApprovalRequestEmail(quote, submitterName, tier) {
+  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+  const quoteUrl = `${frontendUrl}/quotes/${quote._id}`;
+
+  if (!process.env.SMTP_HOST || process.env.NODE_ENV === "test") {
+    console.info(
+      `[APPROVAL STUB] ${submitterName} submitted quote "${quote.clientName}" (${quote._id}) for ${tier}`,
+    );
+    return;
+  }
+
+  const transporter = createTransporter();
+  const recipient =
+    process.env.SMTP_APPROVER_EMAIL ||
+    process.env.SMTP_FROM ||
+    "approvals@enterprise-cpq.local";
+
+  await transporter.sendMail({
+    from: process.env.SMTP_FROM || "noreply@enterprise-cpq.local",
+    to: recipient,
+    subject: `[${tier}] Quote "${quote.clientName}" awaits approval`,
+    text: [
+      `${submitterName} has submitted a quote for ${tier}.`,
+      "",
+      `Client: ${quote.clientName}`,
+      `Membership: ${quote.membershipCount?.toLocaleString() ?? 0}`,
+      `Net TCV: $${(quote.netTCV ?? 0).toLocaleString()}`,
+      "",
+      `Review: ${quoteUrl}`,
+    ].join("\n"),
+    html: `
+      <p><strong>${submitterName}</strong> submitted a quote for <strong>${tier}</strong>.</p>
+      <ul>
+        <li><strong>Client:</strong> ${quote.clientName}</li>
+        <li><strong>Membership:</strong> ${quote.membershipCount?.toLocaleString() ?? 0}</li>
+        <li><strong>Net TCV:</strong> $${(quote.netTCV ?? 0).toLocaleString()}</li>
+      </ul>
+      <p><a href="${quoteUrl}">Review quote</a></p>
+    `,
+  });
+}
+
+/**
+ * Notifies the quote owner of an approval decision.
+ * Stub mode if SMTP_HOST is missing or NODE_ENV === "test".
+ *
+ * @param {string} toEmail      - Quote owner's email
+ * @param {object} quote        - Mongoose quote document
+ * @param {"Approved"|"Rejected"} decision
+ * @param {string} comment      - Approver comment (may be empty)
+ * @param {string} approverName - Display name of the approver
+ */
+async function sendApprovalDecisionEmail(
+  toEmail,
+  quote,
+  decision,
+  comment,
+  approverName,
+) {
+  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+  const quoteUrl = `${frontendUrl}/quotes/${quote._id}`;
+
+  if (!process.env.SMTP_HOST || process.env.NODE_ENV === "test") {
+    console.info(
+      `[DECISION STUB] Quote "${quote.clientName}" (${quote._id}) was ${decision} by ${approverName}`,
+    );
+    return;
+  }
+
+  const transporter = createTransporter();
+
+  await transporter.sendMail({
+    from: process.env.SMTP_FROM || "noreply@enterprise-cpq.local",
+    to: toEmail,
+    subject: `Your quote "${quote.clientName}" was ${decision}`,
+    text: [
+      `Your quote "${quote.clientName}" has been ${decision} by ${approverName}.`,
+      comment ? `\nComment: ${comment}` : "",
+      "",
+      `View quote: ${quoteUrl}`,
+    ].join("\n"),
+    html: `
+      <p>Your quote <strong>${quote.clientName}</strong> has been
+        <strong>${decision}</strong> by ${approverName}.</p>
+      ${comment ? `<p><strong>Comment:</strong> ${comment}</p>` : ""}
+      <p><a href="${quoteUrl}">View quote</a></p>
+    `,
+  });
+}
+
+module.exports = {
+  sendPasswordResetEmail,
+  sendInviteEmail,
+  sendApprovalRequestEmail,
+  sendApprovalDecisionEmail,
+};
