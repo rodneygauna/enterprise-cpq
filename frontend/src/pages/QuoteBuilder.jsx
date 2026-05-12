@@ -311,7 +311,10 @@ export default function QuoteBuilder() {
     }
 
     // Auto-include active baseline products (FR-QUOTE-8)
+    // Guard: skip if baseline was already restored into selections from a saved quote
+    // (avoids double-counting on quote reload)
     for (const baseline of activeBaselines) {
+      if (selections[baseline._id.toString()]) continue;
       items.push({
         product: baseline,
         params: {

@@ -113,6 +113,11 @@ export function calculateLineItem(product, params) {
         product.pricingStrategy === "Tiered"
           ? effectivePrice * termMonths
           : effectivePrice * membershipCount * termMonths;
+      // isQuantityBased (e.g. per-form PMPM): multiply price and impl fee by quantity
+      if (product.isQuantityBased) {
+        extendedPrice *= quantity;
+        implFee *= quantity;
+      }
       break;
     case "Flat Fee":
       extendedPrice = effectivePrice * quantity;

@@ -115,6 +115,50 @@ describe("calculateLineItem — PMPM Standard", () => {
   });
 });
 
+describe("calculateLineItem — PMPM Standard isQuantityBased", () => {
+  const product = {
+    pricingModel: "PMPM",
+    pricingStrategy: "Standard",
+    basePrice: 0.01,
+    implementationFee: 500,
+    scopeBasedPricing: "None",
+    isQuantityBased: true,
+    inheritTierVolumesFromCore: false,
+    tiers: [],
+    volumeBands: [],
+  };
+
+  it("multiplies extendedPrice by quantity", () => {
+    const { extendedPrice } = calculateLineItem(product, {
+      membershipCount: 100000,
+      termMonths: 12,
+      quantity: 5,
+    });
+    // 0.01 × 100,000 × 12 × 5 = 60,000
+    expect(extendedPrice).toBe(60000);
+  });
+
+  it("multiplies implementationFee by quantity", () => {
+    const { implementationFee } = calculateLineItem(product, {
+      membershipCount: 100000,
+      termMonths: 12,
+      quantity: 5,
+    });
+    // 500 × 5 = 2,500
+    expect(implementationFee).toBe(2500);
+  });
+
+  it("quantity 1 returns same as non-quantity-based", () => {
+    const { extendedPrice } = calculateLineItem(product, {
+      membershipCount: 100000,
+      termMonths: 12,
+      quantity: 1,
+    });
+    // 0.01 × 100,000 × 12 × 1 = 12,000
+    expect(extendedPrice).toBe(12000);
+  });
+});
+
 describe("calculateLineItem — PMPM Tiered", () => {
   const product = {
     pricingModel: "PMPM",
