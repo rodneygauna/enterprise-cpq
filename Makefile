@@ -23,13 +23,13 @@ logs:
 # ── Seed the database ─────────────────────────────────────────────────────────
 # Requires the stack to be running (make dev or make prod).
 seed:
-	docker compose exec api node seeds/index.js
+	docker compose -f docker-compose.yml -f docker-compose.dev.yml exec api node seeds/index.js
 
 # ── Reset database to seed data ───────────────────────────────────────────────
 # Prompts for confirmation before wiping all data.
 reset:
 	@read -p "Reset DB to seed data? This deletes ALL data. [y/N] " confirm && \
-	[ "$$confirm" = "y" ] && docker compose exec api node seeds/reset.js || echo "Aborted."
+	[ "$$confirm" = "y" ] && docker compose -f docker-compose.yml -f docker-compose.dev.yml exec api node seeds/reset.js || echo "Aborted."
 
 # ── Rebuild Docker images ─────────────────────────────────────────────────────
 build:
