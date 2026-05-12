@@ -22,12 +22,16 @@ export default function ResetPassword() {
           className="card shadow-sm"
           style={{ width: "100%", maxWidth: "420px" }}
         >
+          <div className="cpq-auth-header">
+            <h1>Enterprise CPQ</h1>
+          </div>
           <div className="card-body p-4 text-center">
-            <h1 className="h4 mb-3">Invalid reset link</h1>
+            <h2 className="h4 mb-3">Invalid reset link</h2>
             <p className="text-muted">
               This password reset link is invalid or has expired.
             </p>
             <Link to="/forgot-password" className="btn btn-primary">
+              <i className="bi bi-envelope me-2" aria-hidden="true" />
               Request a new link
             </Link>
           </div>
@@ -63,8 +67,11 @@ export default function ResetPassword() {
         className="card shadow-sm"
         style={{ width: "100%", maxWidth: "420px" }}
       >
+        <div className="cpq-auth-header">
+          <h1>Enterprise CPQ</h1>
+        </div>
         <div className="card-body p-4">
-          <h1 className="h4 mb-4">Set new password</h1>
+          <h2 className="h4 mb-4">Set new password</h2>
 
           {error && (
             <div className="alert alert-danger" role="alert" aria-live="polite">
@@ -107,7 +114,10 @@ export default function ResetPassword() {
                   <span>Updating password…</span>
                 </>
               ) : (
-                "Update password"
+                <>
+                  <i className="bi bi-check-lg me-2" aria-hidden="true" />
+                  Update password
+                </>
               )}
             </button>
           </form>

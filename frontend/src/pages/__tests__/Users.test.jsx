@@ -415,10 +415,10 @@ describe("invite drawer", () => {
   async function openInviteDrawer(user) {
     await waitFor(() =>
       expect(
-        screen.getByRole("button", { name: /\+ invite user/i }),
+        screen.getByRole("button", { name: /invite user/i }),
       ).toBeInTheDocument(),
     );
-    await user.click(screen.getByRole("button", { name: /\+ invite user/i }));
+    await user.click(screen.getByRole("button", { name: /invite user/i }));
     return screen.findByRole("dialog", { name: /invite user/i });
   }
 

@@ -277,7 +277,8 @@ function UsersPanel() {
           className="btn btn-primary btn-sm"
           onClick={openInvite}
         >
-          + Invite User
+          <i className="bi bi-person-plus me-2" aria-hidden="true" />
+          Invite User
         </button>
       </div>
 
@@ -328,6 +329,7 @@ function UsersPanel() {
               </div>
               <div className="col-md-2">
                 <button type="submit" className="btn btn-primary btn-sm w-100">
+                  <i className="bi bi-funnel me-2" aria-hidden="true" />
                   Filter
                 </button>
               </div>
@@ -339,6 +341,7 @@ function UsersPanel() {
                   className="btn btn-link btn-sm p-0 text-muted"
                   onClick={handleClearFilters}
                 >
+                  <i className="bi bi-x-circle me-1" aria-hidden="true" />
                   Clear filters
                 </button>
               </div>
@@ -505,6 +508,7 @@ function UsersPanel() {
                 aria-label={`Edit role for ${viewUser.firstName} ${viewUser.lastName}`}
                 onClick={() => openEdit(viewUser)}
               >
+                <i className="bi bi-pencil me-2" aria-hidden="true" />
                 Edit Role
               </button>
               {viewUser._id !== currentUser?._id && (
@@ -521,7 +525,17 @@ function UsersPanel() {
                       : `Activate user ${viewUser.firstName} ${viewUser.lastName}`
                   }
                 >
-                  {viewUser.isActive ? "Deactivate" : "Activate"}
+                  {viewUser.isActive ? (
+                    <>
+                      <i className="bi bi-toggle-off me-2" aria-hidden="true" />
+                      Deactivate
+                    </>
+                  ) : (
+                    <>
+                      <i className="bi bi-toggle-on me-2" aria-hidden="true" />
+                      Activate
+                    </>
+                  )}
                 </button>
               )}
             </div>
@@ -607,6 +621,7 @@ function UsersPanel() {
                 onClick={closeEdit}
                 disabled={saving}
               >
+                <i className="bi bi-x-lg me-2" aria-hidden="true" />
                 Cancel
               </button>
               <button
@@ -624,7 +639,10 @@ function UsersPanel() {
                     Saving…
                   </>
                 ) : (
-                  "Save"
+                  <>
+                    <i className="bi bi-check-lg me-2" aria-hidden="true" />
+                    Save
+                  </>
                 )}
               </button>
             </div>
@@ -698,6 +716,7 @@ function UsersPanel() {
               onClick={closeInvite}
               disabled={inviting}
             >
+              <i className="bi bi-x-lg me-2" aria-hidden="true" />
               Cancel
             </button>
             <button
@@ -715,7 +734,10 @@ function UsersPanel() {
                   Sending…
                 </>
               ) : (
-                "Send Invitation"
+                <>
+                  <i className="bi bi-person-plus me-2" aria-hidden="true" />
+                  Send Invitation
+                </>
               )}
             </button>
           </div>

@@ -183,7 +183,8 @@ function ProductLinesPanel() {
           className="btn btn-primary"
           onClick={openAddDrawer}
         >
-          + Add Product Line
+          <i className="bi bi-plus-lg me-2" aria-hidden="true" />
+          Add Product Line
         </button>
       </div>
       <p className="text-muted mb-4">
@@ -216,7 +217,7 @@ function ProductLinesPanel() {
                       disabled={idx === 0}
                       aria-label={`Move ${line.name} up`}
                     >
-                      ↑
+                      <i className="bi bi-arrow-up" aria-hidden="true" />
                     </button>
                     <button
                       type="button"
@@ -225,7 +226,7 @@ function ProductLinesPanel() {
                       disabled={idx === lines.length - 1}
                       aria-label={`Move ${line.name} down`}
                     >
-                      ↓
+                      <i className="bi bi-arrow-down" aria-hidden="true" />
                     </button>
                   </td>
                   <td>
@@ -350,6 +351,7 @@ function ProductLinesPanel() {
               className="btn btn-secondary"
               onClick={closeDrawer}
             >
+              <i className="bi bi-x-lg me-2" aria-hidden="true" />
               Cancel
             </button>
             <button
@@ -358,11 +360,19 @@ function ProductLinesPanel() {
               disabled={saving}
               aria-busy={saving}
             >
-              {saving
-                ? "Saving…"
-                : editingId
-                  ? "Save Changes"
-                  : "Create Product Line"}
+              {saving ? (
+                "Saving…"
+              ) : editingId ? (
+                <>
+                  <i className="bi bi-check-lg me-2" aria-hidden="true" />
+                  Save Changes
+                </>
+              ) : (
+                <>
+                  <i className="bi bi-check-lg me-2" aria-hidden="true" />
+                  Create Product Line
+                </>
+              )}
             </button>
           </div>
         </form>
@@ -385,6 +395,7 @@ function ProductLinesPanel() {
                   openEditDrawer(viewLine);
                 }}
               >
+                <i className="bi bi-pencil me-2" aria-hidden="true" />
                 Edit
               </button>
               <button
@@ -395,6 +406,7 @@ function ProductLinesPanel() {
                   setDeleteTarget(viewLine);
                 }}
               >
+                <i className="bi bi-trash3 me-2" aria-hidden="true" />
                 Delete
               </button>
             </div>
@@ -468,6 +480,7 @@ function ProductLinesPanel() {
                   onClick={() => setDeleteTarget(null)}
                   disabled={deleting}
                 >
+                  <i className="bi bi-x-lg me-2" aria-hidden="true" />
                   Cancel
                 </button>
                 <button
@@ -476,7 +489,14 @@ function ProductLinesPanel() {
                   onClick={confirmDelete}
                   disabled={deleting}
                 >
-                  {deleting ? "Deleting…" : "Delete"}
+                  {deleting ? (
+                    "Deleting…"
+                  ) : (
+                    <>
+                      <i className="bi bi-trash3 me-2" aria-hidden="true" />
+                      Delete
+                    </>
+                  )}
                 </button>
               </div>
             </div>

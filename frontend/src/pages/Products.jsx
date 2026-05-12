@@ -218,7 +218,7 @@ function TiersEditor({ tiers, onChange }) {
             onClick={() => removeTier(i)}
             aria-label={`Remove tier ${i + 1}`}
           >
-            &times;
+            <i className="bi bi-x-lg" aria-hidden="true" />
           </button>
         </div>
       ))}
@@ -227,7 +227,8 @@ function TiersEditor({ tiers, onChange }) {
         className="btn btn-outline-secondary btn-sm mt-1"
         onClick={addTier}
       >
-        + Add Tier
+        <i className="bi bi-plus me-1" aria-hidden="true" />
+        Add Tier
       </button>
     </fieldset>
   );
@@ -338,7 +339,7 @@ function VolumeBandsEditor({ bands, onChange }) {
                 onClick={() => removeBand(i)}
                 aria-label={`Remove band ${i + 1}`}
               >
-                &times;
+                <i className="bi bi-x-lg" aria-hidden="true" />
               </button>
             </div>
           </div>
@@ -349,7 +350,8 @@ function VolumeBandsEditor({ bands, onChange }) {
         className="btn btn-outline-secondary btn-sm mt-1"
         onClick={addBand}
       >
-        + Add Band
+        <i className="bi bi-plus me-1" aria-hidden="true" />
+        Add Band
       </button>
     </fieldset>
   );
@@ -589,7 +591,8 @@ function ProductsPanel() {
         <h1 className="h3 mb-0">Product Catalog</h1>
         {isAdmin && (
           <button className="btn btn-primary btn-sm" onClick={openAddDrawer}>
-            + Add Product
+            <i className="bi bi-plus-lg me-2" aria-hidden="true" />
+            Add Product
           </button>
         )}
       </div>
@@ -641,6 +644,7 @@ function ProductsPanel() {
               className="btn btn-outline-secondary btn-sm"
               onClick={handleExport}
             >
+              <i className="bi bi-download me-2" aria-hidden="true" />
               Export XLSX
             </button>
             <label
@@ -648,7 +652,14 @@ function ProductsPanel() {
               htmlFor="import-file-input"
               aria-label="Import products from Excel"
             >
-              {importing ? "Importing…" : "Import XLSX"}
+              {importing ? (
+                "Importing…"
+              ) : (
+                <>
+                  <i className="bi bi-upload me-2" aria-hidden="true" />
+                  Import XLSX
+                </>
+              )}
               <input
                 id="import-file-input"
                 type="file"
@@ -665,6 +676,7 @@ function ProductsPanel() {
                 onClick={() => setShowResetModal(true)}
                 aria-label="Reset catalog to seed data"
               >
+                <i className="bi bi-arrow-clockwise me-2" aria-hidden="true" />
                 Reset Catalog
               </button>
             )}
@@ -1123,6 +1135,7 @@ function ProductsPanel() {
               className="btn btn-secondary"
               onClick={closeDrawer}
             >
+              <i className="bi bi-x-lg me-2" aria-hidden="true" />
               Cancel
             </button>
             <button
@@ -1131,11 +1144,19 @@ function ProductsPanel() {
               disabled={saving}
               aria-busy={saving}
             >
-              {saving
-                ? "Saving…"
-                : editingId
-                  ? "Save Changes"
-                  : "Create Product"}
+              {saving ? (
+                "Saving…"
+              ) : editingId ? (
+                <>
+                  <i className="bi bi-check-lg me-2" aria-hidden="true" />
+                  Save Changes
+                </>
+              ) : (
+                <>
+                  <i className="bi bi-check-lg me-2" aria-hidden="true" />
+                  Create Product
+                </>
+              )}
             </button>
           </div>
         </form>
@@ -1159,6 +1180,7 @@ function ProductsPanel() {
                     openEditDrawer(viewProduct);
                   }}
                 >
+                  <i className="bi bi-pencil me-2" aria-hidden="true" />
                   Edit
                 </button>
                 <button
@@ -1169,6 +1191,7 @@ function ProductsPanel() {
                     handleDuplicate(viewProduct);
                   }}
                 >
+                  <i className="bi bi-copy me-2" aria-hidden="true" />
                   Duplicate
                 </button>
                 <button
@@ -1179,6 +1202,7 @@ function ProductsPanel() {
                     setDeleteTarget(viewProduct);
                   }}
                 >
+                  <i className="bi bi-trash3 me-2" aria-hidden="true" />
                   Delete
                 </button>
               </div>
@@ -1335,6 +1359,7 @@ function ProductsPanel() {
                   onClick={() => setDeleteTarget(null)}
                   disabled={deleting}
                 >
+                  <i className="bi bi-x-lg me-2" aria-hidden="true" />
                   Cancel
                 </button>
                 <button
@@ -1344,7 +1369,14 @@ function ProductsPanel() {
                   disabled={deleting}
                   aria-busy={deleting}
                 >
-                  {deleting ? "Deleting…" : "Delete"}
+                  {deleting ? (
+                    "Deleting…"
+                  ) : (
+                    <>
+                      <i className="bi bi-trash3 me-2" aria-hidden="true" />
+                      Delete
+                    </>
+                  )}
                 </button>
               </div>
             </div>
@@ -1390,6 +1422,7 @@ function ProductsPanel() {
                   onClick={() => setShowResetModal(false)}
                   disabled={resetting}
                 >
+                  <i className="bi bi-x-lg me-2" aria-hidden="true" />
                   Cancel
                 </button>
                 <button
@@ -1399,7 +1432,17 @@ function ProductsPanel() {
                   disabled={resetting}
                   aria-busy={resetting}
                 >
-                  {resetting ? "Resetting…" : "Reset Catalog"}
+                  {resetting ? (
+                    "Resetting…"
+                  ) : (
+                    <>
+                      <i
+                        className="bi bi-arrow-clockwise me-2"
+                        aria-hidden="true"
+                      />
+                      Reset Catalog
+                    </>
+                  )}
                 </button>
               </div>
             </div>

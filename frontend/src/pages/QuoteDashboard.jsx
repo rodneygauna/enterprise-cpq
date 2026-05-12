@@ -230,7 +230,8 @@ export default function QuoteDashboard() {
       <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
         <h1 className="h3 mb-0">Quote Dashboard</h1>
         <Link to="/quotes/new" className="btn btn-primary btn-sm">
-          + New Quote
+          <i className="bi bi-plus-lg me-2" aria-hidden="true" />
+          New Quote
         </Link>
       </div>
 
@@ -459,6 +460,7 @@ export default function QuoteDashboard() {
               </div>
               <div className="col-md-1 d-flex gap-1">
                 <button type="submit" className="btn btn-primary btn-sm w-100">
+                  <i className="bi bi-funnel me-1" aria-hidden="true" />
                   Filter
                 </button>
               </div>
@@ -470,6 +472,7 @@ export default function QuoteDashboard() {
                   className="btn btn-link btn-sm p-0 text-muted"
                   onClick={handleClearFilters}
                 >
+                  <i className="bi bi-x-circle me-1" aria-hidden="true" />
                   Clear filters
                 </button>
               </div>
@@ -576,6 +579,10 @@ export default function QuoteDashboard() {
                             className="btn btn-outline-primary btn-sm"
                             aria-label={`Open quote for ${quote.clientName}`}
                           >
+                            <i
+                              className="bi bi-folder2-open me-1"
+                              aria-hidden="true"
+                            />
                             Open
                           </Link>
                           {quote.status === "Draft" && (
@@ -586,9 +593,17 @@ export default function QuoteDashboard() {
                               disabled={submittingId === quote._id}
                               aria-label={`Submit quote for ${quote.clientName}`}
                             >
-                              {submittingId === quote._id
-                                ? "Submitting…"
-                                : "Submit"}
+                              {submittingId === quote._id ? (
+                                "Submitting…"
+                              ) : (
+                                <>
+                                  <i
+                                    className="bi bi-send me-1"
+                                    aria-hidden="true"
+                                  />
+                                  Submit
+                                </>
+                              )}
                             </button>
                           )}
                           <button
@@ -597,6 +612,7 @@ export default function QuoteDashboard() {
                             onClick={() => handleCopy(quote._id)}
                             aria-label={`Copy quote for ${quote.clientName}`}
                           >
+                            <i className="bi bi-copy me-1" aria-hidden="true" />
                             Copy
                           </button>
                           <button
@@ -605,6 +621,10 @@ export default function QuoteDashboard() {
                             onClick={() => setDeleteTarget(quote)}
                             aria-label={`Delete quote for ${quote.clientName}`}
                           >
+                            <i
+                              className="bi bi-trash3 me-1"
+                              aria-hidden="true"
+                            />
                             Delete
                           </button>
                         </div>
@@ -718,6 +738,7 @@ export default function QuoteDashboard() {
                   onClick={() => setDeleteTarget(null)}
                   disabled={deleting}
                 >
+                  <i className="bi bi-x-lg me-2" aria-hidden="true" />
                   Cancel
                 </button>
                 <button
@@ -736,7 +757,10 @@ export default function QuoteDashboard() {
                       Deleting…
                     </>
                   ) : (
-                    "Delete"
+                    <>
+                      <i className="bi bi-trash3 me-2" aria-hidden="true" />
+                      Delete
+                    </>
                   )}
                 </button>
               </div>

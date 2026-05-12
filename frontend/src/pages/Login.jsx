@@ -40,8 +40,11 @@ export default function Login() {
         className="card shadow-sm"
         style={{ width: "100%", maxWidth: "420px" }}
       >
+        <div className="cpq-auth-header">
+          <h1>Enterprise CPQ</h1>
+        </div>
         <div className="card-body p-4">
-          <h1 className="h4 mb-4 text-center">Sign in to Enterprise CPQ</h1>
+          <h2 className="h5 mb-4 text-center">Sign in to Enterprise CPQ</h2>
 
           {/* Live region so screen readers announce auth errors */}
           {error && (
@@ -103,7 +106,13 @@ export default function Login() {
                   <span>Signing in…</span>
                 </>
               ) : (
-                "Sign in"
+                <>
+                  <i
+                    className="bi bi-box-arrow-in-right me-2"
+                    aria-hidden="true"
+                  />
+                  Sign in
+                </>
               )}
             </button>
           </form>

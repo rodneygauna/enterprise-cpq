@@ -1041,7 +1041,8 @@ export default function QuoteBuilder() {
           className="btn btn-outline-secondary btn-sm"
           aria-label="Back to quotes"
         >
-          ← Back
+          <i className="bi bi-arrow-left me-1" aria-hidden="true" />
+          Back
         </Link>
         <h1 className="h4 mb-0">
           {isNew
@@ -1055,6 +1056,7 @@ export default function QuoteBuilder() {
             onClick={handleExportCSV}
             disabled={lineItemsForCalc.length === 0}
           >
+            <i className="bi bi-download me-1" aria-hidden="true" />
             Export CSV
           </button>
           {quoteId && (
@@ -1071,6 +1073,7 @@ export default function QuoteBuilder() {
                 }
               }}
             >
+              <i className="bi bi-copy me-1" aria-hidden="true" />
               Duplicate
             </button>
           )}

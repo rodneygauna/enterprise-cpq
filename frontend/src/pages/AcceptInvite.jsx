@@ -27,12 +27,16 @@ export default function AcceptInvite() {
           className="card shadow-sm"
           style={{ width: "100%", maxWidth: "420px" }}
         >
+          <div className="cpq-auth-header">
+            <h1>Enterprise CPQ</h1>
+          </div>
           <div className="card-body p-4 text-center">
-            <h1 className="h4 mb-3">Invalid invitation link</h1>
+            <h2 className="h4 mb-3">Invalid invitation link</h2>
             <p className="text-muted">
               This invitation link is invalid or has expired.
             </p>
             <Link to="/login" className="btn btn-primary">
+              <i className="bi bi-box-arrow-in-right me-2" aria-hidden="true" />
               Go to sign in
             </Link>
           </div>
@@ -74,8 +78,11 @@ export default function AcceptInvite() {
         className="card shadow-sm"
         style={{ width: "100%", maxWidth: "420px" }}
       >
+        <div className="cpq-auth-header">
+          <h1>Enterprise CPQ</h1>
+        </div>
         <div className="card-body p-4">
-          <h1 className="h4 mb-1">Accept your invitation</h1>
+          <h2 className="h4 mb-1">Accept your invitation</h2>
           {prefillEmail && (
             <p className="text-muted small mb-3">
               Setting up account for <strong>{prefillEmail}</strong>
@@ -144,7 +151,14 @@ export default function AcceptInvite() {
               disabled={loading}
               aria-busy={loading}
             >
-              {loading ? "Setting up account…" : "Create account"}
+              {loading ? (
+                "Setting up account…"
+              ) : (
+                <>
+                  <i className="bi bi-person-check me-2" aria-hidden="true" />
+                  Accept invitation
+                </>
+              )}
             </button>
           </form>
 

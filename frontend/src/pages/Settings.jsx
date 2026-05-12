@@ -310,7 +310,14 @@ function SettingsForm() {
       </section>
 
       <button type="submit" className="btn btn-primary" disabled={saving}>
-        {saving ? "Saving…" : "Save Settings"}
+        {saving ? (
+          "Saving…"
+        ) : (
+          <>
+            <i className="bi bi-check-lg me-2" aria-hidden="true" />
+            Save Settings
+          </>
+        )}
       </button>
     </form>
   );
@@ -526,7 +533,14 @@ function DiscountSettingsForm() {
       </section>
 
       <button type="submit" className="btn btn-primary" disabled={saving}>
-        {saving ? "Saving…" : "Save Discount Settings"}
+        {saving ? (
+          "Saving…"
+        ) : (
+          <>
+            <i className="bi bi-check-lg me-2" aria-hidden="true" />
+            Save Discount Settings
+          </>
+        )}
       </button>
     </form>
   );
@@ -776,7 +790,14 @@ function MarginSettingsForm() {
       </section>
 
       <button type="submit" className="btn btn-primary" disabled={saving}>
-        {saving ? "Saving…" : "Save Margin Settings"}
+        {saving ? (
+          "Saving…"
+        ) : (
+          <>
+            <i className="bi bi-check-lg me-2" aria-hidden="true" />
+            Save Margin Settings
+          </>
+        )}
       </button>
     </form>
   );

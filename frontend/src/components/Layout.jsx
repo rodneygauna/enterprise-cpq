@@ -1,24 +1,18 @@
-import { Outlet, NavLink, useNavigate } from "react-router-dom";
-import { useAuth } from "../hooks/useAuth";
+import { useState } from "react";
+import { Outlet } from "react-router-dom";
 import { useBranding } from "../context/BrandingContext";
+import Sidebar from "./Sidebar";
 
 /**
- * Root layout: accessible top navigation bar + main content area.
+ * Root layout: persistent sidebar navigation + main content area.
  * Renders only when the user is authenticated (wrapped by ProtectedRoute).
  *
- * Navigation adapts to the current user's role:
- *   - All roles:   Dashboard
- *   - super_admin: Settings
+ * Desktop (≥md): sidebar is always visible on the left.
+ * Mobile (<md):  top bar with hamburger button toggles the sidebar overlay.
  */
 export default function Layout() {
-  const { user, logout } = useAuth();
   const { branding } = useBranding();
-  const navigate = useNavigate();
-
-  const handleLogout = async () => {
-    await logout();
-    navigate("/login");
-  };
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   return (
     <>
@@ -27,162 +21,40 @@ export default function Layout() {
         Skip to main content
       </a>
 
-      <header>
-        <nav
-          className="navbar navbar-expand-lg navbar-dark bg-primary"
-          aria-label="Main navigation"
-        >
-          <div className="container-fluid">
-            <span className="navbar-brand fw-bold">{branding.companyName}</span>
+      <div className="cpq-app-shell">
+        {/* Sidebar: handles both desktop + mobile overlay */}
+        <Sidebar
+          mobileOpen={mobileNavOpen}
+          onMobileClose={() => setMobileNavOpen(false)}
+        />
 
-            <button
-              className="navbar-toggler"
-              type="button"
-              data-bs-toggle="collapse"
-              data-bs-target="#main-nav"
-              aria-controls="main-nav"
-              aria-expanded="false"
-              aria-label="Toggle navigation"
+        {/* Main content column */}
+        <div className="cpq-main-wrapper">
+          {/* Mobile-only topbar with hamburger */}
+          <header className="cpq-topbar d-flex d-md-none justify-content-between align-items-center">
+            <span
+              className="fw-bold"
+              style={{ fontFamily: "var(--cpq-font-heading)" }}
             >
-              <span className="navbar-toggler-icon" aria-hidden="true" />
+              {branding.companyName}
+            </span>
+            <button
+              type="button"
+              className="btn btn-sm btn-link text-body p-1"
+              aria-label="Open navigation"
+              aria-expanded={mobileNavOpen}
+              aria-controls="mobile-sidebar"
+              onClick={() => setMobileNavOpen(true)}
+            >
+              <i className="bi bi-list fs-4" aria-hidden="true" />
             </button>
+          </header>
 
-            <div className="collapse navbar-collapse" id="main-nav">
-              <ul className="navbar-nav me-auto mb-2 mb-lg-0" role="list">
-                <li className="nav-item">
-                  <NavLink
-                    to="/"
-                    end
-                    className={({ isActive }) =>
-                      "nav-link" + (isActive ? " active" : "")
-                    }
-                    aria-current={({ isActive }) =>
-                      isActive ? "page" : undefined
-                    }
-                  >
-                    Dashboard
-                  </NavLink>
-                </li>
-
-                <li className="nav-item">
-                  <NavLink
-                    to="/quotes"
-                    className={({ isActive }) =>
-                      "nav-link" + (isActive ? " active" : "")
-                    }
-                    aria-current={({ isActive }) =>
-                      isActive ? "page" : undefined
-                    }
-                  >
-                    Quotes
-                  </NavLink>
-                </li>
-
-                {[
-                  "sales_manager",
-                  "executive",
-                  "admin",
-                  "super_admin",
-                ].includes(user?.role) && (
-                  <li className="nav-item">
-                    <NavLink
-                      to="/approval-queue"
-                      className={({ isActive }) =>
-                        "nav-link" + (isActive ? " active" : "")
-                      }
-                      aria-current={({ isActive }) =>
-                        isActive ? "page" : undefined
-                      }
-                    >
-                      Approval Queue
-                    </NavLink>
-                  </li>
-                )}
-
-                {["admin", "super_admin"].includes(user?.role) && (
-                  <>
-                    <li className="nav-item">
-                      <NavLink
-                        to="/admin/product-lines"
-                        className={({ isActive }) =>
-                          "nav-link" + (isActive ? " active" : "")
-                        }
-                        aria-current={({ isActive }) =>
-                          isActive ? "page" : undefined
-                        }
-                      >
-                        Product Lines
-                      </NavLink>
-                    </li>
-                    <li className="nav-item">
-                      <NavLink
-                        to="/admin/products"
-                        className={({ isActive }) =>
-                          "nav-link" + (isActive ? " active" : "")
-                        }
-                        aria-current={({ isActive }) =>
-                          isActive ? "page" : undefined
-                        }
-                      >
-                        Products
-                      </NavLink>
-                    </li>
-                    <li className="nav-item">
-                      <NavLink
-                        to="/admin/users"
-                        className={({ isActive }) =>
-                          "nav-link" + (isActive ? " active" : "")
-                        }
-                        aria-current={({ isActive }) =>
-                          isActive ? "page" : undefined
-                        }
-                      >
-                        Users
-                      </NavLink>
-                    </li>
-                  </>
-                )}
-
-                {["admin", "super_admin"].includes(user?.role) && (
-                  <li className="nav-item">
-                    <NavLink
-                      to="/settings"
-                      className={({ isActive }) =>
-                        "nav-link" + (isActive ? " active" : "")
-                      }
-                      aria-current={({ isActive }) =>
-                        isActive ? "page" : undefined
-                      }
-                    >
-                      Settings
-                    </NavLink>
-                  </li>
-                )}
-              </ul>
-
-              <ul className="navbar-nav ms-auto" role="list">
-                <li className="nav-item d-flex align-items-center">
-                  <span className="nav-link text-light" aria-live="polite">
-                    {user?.firstName} {user?.lastName}
-                  </span>
-                </li>
-                <li className="nav-item">
-                  <button
-                    className="btn btn-outline-light btn-sm ms-2"
-                    onClick={handleLogout}
-                  >
-                    Sign out
-                  </button>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </nav>
-      </header>
-
-      <main id="main-content">
-        <Outlet />
-      </main>
+          <main id="main-content" className="flex-grow-1">
+            <Outlet />
+          </main>
+        </div>
+      </div>
     </>
   );
 }

@@ -367,6 +367,63 @@ and real-time financial calculations.
 
 ---
 
+#### 7.12 Modern UI Design System
+
+A cross-cutting design-system layer that adds design tokens, typography, component polish, Bootstrap
+Icons, glassmorphism surfaces, a persistent sidebar navigation, and a dark-mode toggle on top of the
+existing Bootstrap 5 dependency without replacing it or introducing a CSS preprocessor.
+
+- **FR-UIDS-1:** The application shall define all design tokens (typography, spacing, shadow, border
+  radius) as CSS custom properties in a single `frontend/src/styles/theme.css` file imported after
+  Bootstrap. No color values shall be hardcoded in any JSX file.
+
+- **FR-UIDS-2:** The font pairing **Inter** (body) and **Plus Jakarta Sans** (headings) shall be
+  applied globally via `<link>` preconnect + stylesheet in `index.html` using `font-display: swap`
+  to prevent layout shift.
+
+- **FR-UIDS-3:** `bootstrap-icons` shall be installed as an npm package. Every button in the
+  application shall carry a Bootstrap Icon paired with a visible text label. Standalone icon-only
+  controls (e.g. dark mode toggle) shall carry `aria-label` in lieu of visible text.
+
+- **FR-UIDS-4:** Cards, buttons, tables, forms, and the navbar shall receive polished visual
+  treatment (consistent border radius, subtle drop shadows, refined hover states) via `theme.css`
+  overrides, without modifying component logic.
+
+- **FR-UIDS-5:** A dark-mode toggle shall be present in the sidebar (desktop) and offcanvas menu
+  (mobile) for all user roles. Activating the toggle shall switch the root `data-bs-theme` attribute
+  between `"light"` and `"dark"`. The toggle shall carry `aria-label="Toggle dark mode"` and
+  `aria-pressed` reflecting the current state.
+
+- **FR-UIDS-6:** The dark-mode preference shall be persisted to `localStorage` under the key
+  `cpq-theme` and restored on page load. No database persistence is required.
+
+- **FR-UIDS-7:** All UI elements introduced or modified by this feature shall pass WCAG 2.1 AA
+  contrast ratios (≥ 4.5:1 for normal text, ≥ 3:1 for large text and UI components) in both light
+  and dark modes. (Extends NFR-7 in Section 6.)
+
+- **FR-UIDS-8:** The existing `BrandingContext` dynamic injection of `--bs-primary` and
+  `--bs-secondary` shall continue to function; `theme.css` shall not override these variables
+  destructively.
+
+- **FR-UIDS-9:** The application shall apply glassmorphism surface effects (`backdrop-filter: blur()`
+  - semi-transparent background) to the sidebar, offcanvas drawer, and modal headers via a
+    `.cpq-glass` utility class. An `@supports` CSS block shall provide a solid-background fallback for
+    browsers that do not support `backdrop-filter`.
+
+- **FR-UIDS-10:** `Layout.jsx` shall be restructured to present a persistent left sidebar navigation
+  at the Bootstrap `md` breakpoint and above. Below `md`, the sidebar shall collapse and be
+  accessible via an offcanvas hamburger menu. The sidebar shall display the brand name, all
+  role-gated navigation links (each with Bootstrap Icon + text label), and the dark-mode toggle.
+  The active route shall be indicated via `aria-current="page"` and a distinct visual style.
+
+#### New Dependencies — 7.12
+
+| Package           | Purpose                              |
+| ----------------- | ------------------------------------ |
+| `bootstrap-icons` | Icon set; imported via CSS font file |
+
+---
+
 ## 8. Data Models (MongoDB Collections)
 
 **`users`**

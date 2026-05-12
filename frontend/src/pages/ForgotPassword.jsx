@@ -37,13 +37,17 @@ export default function ForgotPassword() {
           className="card shadow-sm"
           style={{ width: "100%", maxWidth: "420px" }}
         >
+          <div className="cpq-auth-header">
+            <h1>Enterprise CPQ</h1>
+          </div>
           <div className="card-body p-4 text-center">
-            <h1 className="h4 mb-3">Check your email</h1>
+            <h2 className="h4 mb-3">Check your email</h2>
             <p className="text-muted">
               If an account exists for <strong>{email}</strong>, we&apos;ve sent
               a password reset link. The link expires in 1 hour.
             </p>
             <Link to="/login" className="btn btn-outline-primary mt-2">
+              <i className="bi bi-arrow-left me-2" aria-hidden="true" />
               Back to sign in
             </Link>
           </div>
@@ -61,8 +65,11 @@ export default function ForgotPassword() {
         className="card shadow-sm"
         style={{ width: "100%", maxWidth: "420px" }}
       >
+        <div className="cpq-auth-header">
+          <h1>Enterprise CPQ</h1>
+        </div>
         <div className="card-body p-4">
-          <h1 className="h4 mb-1">Reset your password</h1>
+          <h2 className="h4 mb-1">Reset your password</h2>
           <p className="text-muted small mb-4">
             Enter your email and we&apos;ll send you a reset link.
           </p>
@@ -104,7 +111,10 @@ export default function ForgotPassword() {
                   <span>Sending…</span>
                 </>
               ) : (
-                "Send reset link"
+                <>
+                  <i className="bi bi-envelope me-2" aria-hidden="true" />
+                  Send reset link
+                </>
               )}
             </button>
           </form>

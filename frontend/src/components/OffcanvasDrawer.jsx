@@ -50,7 +50,7 @@ export default function OffcanvasDrawer({
         aria-label={title}
         style={{ width, visibility: "visible" }}
       >
-        <div className="offcanvas-header border-bottom">
+        <div className="offcanvas-header border-bottom cpq-glass">
           <h2 className="offcanvas-title h5">{title}</h2>
           <button
             type="button"

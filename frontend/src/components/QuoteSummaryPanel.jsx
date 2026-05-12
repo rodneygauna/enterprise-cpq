@@ -180,7 +180,10 @@ export default function QuoteSummaryPanel({
               Saving…
             </>
           ) : (
-            "Save Quote"
+            <>
+              <i className="bi bi-check-lg me-2" aria-hidden="true" />
+              Save Quote
+            </>
           )}
         </button>
       </div>

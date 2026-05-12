@@ -107,6 +107,7 @@ function ActionModal({ quote, action, onConfirm, onCancel, processing }) {
               onClick={onCancel}
               disabled={processing}
             >
+              <i className="bi bi-x-lg me-2" aria-hidden="true" />
               Cancel
             </button>
             <button
@@ -115,7 +116,19 @@ function ActionModal({ quote, action, onConfirm, onCancel, processing }) {
               onClick={() => onConfirm(comment)}
               disabled={processing}
             >
-              {processing ? "Saving…" : btnLabel}
+              {processing ? (
+                "Saving…"
+              ) : isApprove ? (
+                <>
+                  <i className="bi bi-check-circle me-2" aria-hidden="true" />
+                  Approve
+                </>
+              ) : (
+                <>
+                  <i className="bi bi-x-circle me-2" aria-hidden="true" />
+                  Reject
+                </>
+              )}
             </button>
           </div>
         </div>
@@ -269,6 +282,10 @@ function ApprovalQueueContent() {
                           onClick={() => openModal(q, "approve")}
                           aria-label={`Approve quote for ${q.clientName}`}
                         >
+                          <i
+                            className="bi bi-check-circle me-1"
+                            aria-hidden="true"
+                          />
                           Approve
                         </button>
                         <button
@@ -277,6 +294,10 @@ function ApprovalQueueContent() {
                           onClick={() => openModal(q, "reject")}
                           aria-label={`Reject quote for ${q.clientName}`}
                         >
+                          <i
+                            className="bi bi-x-circle me-1"
+                            aria-hidden="true"
+                          />
                           Reject
                         </button>
                       </div>

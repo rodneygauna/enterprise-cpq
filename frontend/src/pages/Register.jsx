@@ -67,8 +67,11 @@ export default function Register() {
         className="card shadow-sm"
         style={{ width: "100%", maxWidth: "500px" }}
       >
+        <div className="cpq-auth-header">
+          <h1>Enterprise CPQ</h1>
+        </div>
         <div className="card-body p-4">
-          <h1 className="h4 mb-4 text-center">Create your account</h1>
+          <h2 className="h5 mb-4 text-center">Create your account</h2>
 
           {error && (
             <div className="alert alert-danger" role="alert" aria-live="polite">
@@ -170,7 +173,10 @@ export default function Register() {
                   <span>Creating account…</span>
                 </>
               ) : (
-                "Create account"
+                <>
+                  <i className="bi bi-person-check me-2" aria-hidden="true" />
+                  Create account
+                </>
               )}
             </button>
           </form>

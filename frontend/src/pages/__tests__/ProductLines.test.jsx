@@ -124,12 +124,10 @@ describe("add drawer", () => {
   async function openAddDrawer(user) {
     await waitFor(() =>
       expect(
-        screen.getByRole("button", { name: /\+ add product line/i }),
+        screen.getByRole("button", { name: /add product line/i }),
       ).toBeInTheDocument(),
     );
-    await user.click(
-      screen.getByRole("button", { name: /\+ add product line/i }),
-    );
+    await user.click(screen.getByRole("button", { name: /add product line/i }));
     return screen.getByRole("dialog", { name: /add product line/i });
   }
 
