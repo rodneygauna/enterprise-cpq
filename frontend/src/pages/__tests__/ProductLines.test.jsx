@@ -267,6 +267,9 @@ describe("edit drawer", () => {
     await waitFor(() => screen.getByText("Care Management"));
 
     await user.click(
+      screen.getByRole("button", { name: /view details for care management/i }),
+    );
+    await user.click(
       screen.getByRole("button", { name: /edit care management/i }),
     );
 
@@ -285,6 +288,9 @@ describe("edit drawer", () => {
     renderPage();
     await waitFor(() => screen.getByText("Care Management"));
 
+    await user.click(
+      screen.getByRole("button", { name: /view details for care management/i }),
+    );
     await user.click(
       screen.getByRole("button", { name: /edit care management/i }),
     );
@@ -330,6 +336,9 @@ describe("delete flow", () => {
     await waitFor(() => screen.getByText("Care Management"));
 
     await user.click(
+      screen.getByRole("button", { name: /view details for care management/i }),
+    );
+    await user.click(
       screen.getByRole("button", { name: /delete care management/i }),
     );
 
@@ -346,6 +355,9 @@ describe("delete flow", () => {
     renderPage();
     await waitFor(() => screen.getByText("Care Management"));
 
+    await user.click(
+      screen.getByRole("button", { name: /view details for care management/i }),
+    );
     await user.click(
       screen.getByRole("button", { name: /delete care management/i }),
     );
@@ -369,6 +381,9 @@ describe("delete flow", () => {
     renderPage();
     await waitFor(() => screen.getByText("Care Management"));
 
+    await user.click(
+      screen.getByRole("button", { name: /view details for care management/i }),
+    );
     await user.click(
       screen.getByRole("button", { name: /delete care management/i }),
     );

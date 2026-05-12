@@ -203,9 +203,6 @@ function ProductLinesPanel() {
                 <th scope="col">Order</th>
                 <th scope="col">Name</th>
                 <th scope="col">Color</th>
-                <th scope="col">
-                  <span className="visually-hidden">Actions</span>
-                </th>
               </tr>
             </thead>
             <tbody>
@@ -259,24 +256,6 @@ function ProductLinesPanel() {
                     ) : (
                       <span className="text-muted fst-italic">None</span>
                     )}
-                  </td>
-                  <td className="text-end" style={{ whiteSpace: "nowrap" }}>
-                    <button
-                      type="button"
-                      className="btn btn-sm btn-outline-primary me-1"
-                      onClick={() => openEditDrawer(line)}
-                      aria-label={`Edit ${line.name}`}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-sm btn-outline-danger"
-                      onClick={() => setDeleteTarget(line)}
-                      aria-label={`Delete ${line.name}`}
-                    >
-                      Delete
-                    </button>
                   </td>
                 </tr>
               ))}
@@ -400,6 +379,7 @@ function ProductLinesPanel() {
             <div className="d-flex gap-2 mb-4">
               <button
                 className="btn btn-primary btn-sm"
+                aria-label={`Edit ${viewLine.name}`}
                 onClick={() => {
                   closeViewDrawer();
                   openEditDrawer(viewLine);
@@ -409,6 +389,7 @@ function ProductLinesPanel() {
               </button>
               <button
                 className="btn btn-outline-danger btn-sm"
+                aria-label={`Delete ${viewLine.name}`}
                 onClick={() => {
                   closeViewDrawer();
                   setDeleteTarget(viewLine);

@@ -702,11 +702,6 @@ function ProductsPanel() {
                   <th scope="col">Product Line</th>
                   <th scope="col">Type</th>
                   <th scope="col">Pricing Model</th>
-                  {isAdmin && (
-                    <th scope="col" className="text-end">
-                      Actions
-                    </th>
-                  )}
                 </tr>
               </thead>
               <tbody>
@@ -729,31 +724,6 @@ function ProductsPanel() {
                     </td>
                     <td>{product.type}</td>
                     <td>{product.pricingModel}</td>
-                    {isAdmin && (
-                      <td className="text-end text-nowrap">
-                        <button
-                          className="btn btn-outline-primary btn-sm me-1"
-                          onClick={() => openEditDrawer(product)}
-                          aria-label={`Edit ${product.name}`}
-                        >
-                          Edit
-                        </button>
-                        <button
-                          className="btn btn-outline-secondary btn-sm me-1"
-                          onClick={() => handleDuplicate(product)}
-                          aria-label={`Duplicate ${product.name}`}
-                        >
-                          Copy
-                        </button>
-                        <button
-                          className="btn btn-outline-danger btn-sm"
-                          onClick={() => setDeleteTarget(product)}
-                          aria-label={`Delete ${product.name}`}
-                        >
-                          Delete
-                        </button>
-                      </td>
-                    )}
                   </tr>
                 ))}
               </tbody>
@@ -1183,6 +1153,7 @@ function ProductsPanel() {
               <div className="d-flex gap-2 mb-4">
                 <button
                   className="btn btn-primary btn-sm"
+                  aria-label={`Edit ${viewProduct.name}`}
                   onClick={() => {
                     closeViewDrawer();
                     openEditDrawer(viewProduct);
@@ -1192,6 +1163,7 @@ function ProductsPanel() {
                 </button>
                 <button
                   className="btn btn-outline-secondary btn-sm"
+                  aria-label={`Duplicate ${viewProduct.name}`}
                   onClick={() => {
                     closeViewDrawer();
                     handleDuplicate(viewProduct);
@@ -1201,6 +1173,7 @@ function ProductsPanel() {
                 </button>
                 <button
                   className="btn btn-outline-danger btn-sm"
+                  aria-label={`Delete ${viewProduct.name}`}
                   onClick={() => {
                     closeViewDrawer();
                     setDeleteTarget(viewProduct);

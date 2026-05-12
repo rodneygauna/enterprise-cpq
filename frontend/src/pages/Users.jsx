@@ -385,9 +385,6 @@ function UsersPanel() {
                     <th scope="col">Role</th>
                     <th scope="col">Status</th>
                     <th scope="col">Last Login</th>
-                    <th scope="col">
-                      <span className="visually-hidden">Actions</span>
-                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -420,48 +417,6 @@ function UsersPanel() {
                       </td>
                       <td className="text-muted small">
                         {formatDate(u.lastLogin)}
-                      </td>
-                      <td>
-                        <div className="d-flex gap-1 justify-content-end">
-                          <button
-                            type="button"
-                            className="btn btn-outline-primary btn-sm"
-                            onClick={() => openEdit(u)}
-                            aria-label={`Edit user ${u.firstName} ${u.lastName}`}
-                          >
-                            Edit
-                          </button>
-                          {u._id !== currentUser?._id && (
-                            <button
-                              type="button"
-                              className={`btn btn-sm ${u.isActive ? "btn-outline-secondary" : "btn-outline-success"}`}
-                              onClick={() => handleToggleStatus(u)}
-                              disabled={togglingId === u._id}
-                              aria-busy={togglingId === u._id}
-                              aria-label={
-                                u.isActive
-                                  ? `Deactivate user ${u.firstName} ${u.lastName}`
-                                  : `Activate user ${u.firstName} ${u.lastName}`
-                              }
-                            >
-                              {togglingId === u._id ? (
-                                <>
-                                  <span
-                                    className="spinner-border spinner-border-sm me-1"
-                                    aria-hidden="true"
-                                  />
-                                  <span className="visually-hidden">
-                                    Updating…
-                                  </span>
-                                </>
-                              ) : u.isActive ? (
-                                "Deactivate"
-                              ) : (
-                                "Activate"
-                              )}
-                            </button>
-                          )}
-                        </div>
                       </td>
                     </tr>
                   ))}
@@ -547,6 +502,7 @@ function UsersPanel() {
               <button
                 type="button"
                 className="btn btn-primary btn-sm"
+                aria-label={`Edit role for ${viewUser.firstName} ${viewUser.lastName}`}
                 onClick={() => openEdit(viewUser)}
               >
                 Edit Role
@@ -561,8 +517,8 @@ function UsersPanel() {
                   }}
                   aria-label={
                     viewUser.isActive
-                      ? `Deactivate ${viewUser.firstName}`
-                      : `Activate ${viewUser.firstName}`
+                      ? `Deactivate user ${viewUser.firstName} ${viewUser.lastName}`
+                      : `Activate user ${viewUser.firstName} ${viewUser.lastName}`
                   }
                 >
                   {viewUser.isActive ? "Deactivate" : "Activate"}

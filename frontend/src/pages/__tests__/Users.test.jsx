@@ -258,16 +258,19 @@ describe("edit drawer", () => {
   async function openEditDrawer(user) {
     await waitFor(() =>
       expect(
-        screen.getAllByRole("button", { name: /edit user/i })[0],
+        screen.getByRole("button", { name: /view user alice admin/i }),
       ).toBeInTheDocument(),
     );
     await user.click(
-      screen.getAllByRole("button", { name: /edit user alice admin/i })[0],
+      screen.getByRole("button", { name: /view user alice admin/i }),
+    );
+    await user.click(
+      screen.getByRole("button", { name: /edit role for alice admin/i }),
     );
     return screen.findByRole("dialog", { name: /edit alice admin/i });
   }
 
-  it("opens when Edit button is clicked in action column", async () => {
+  it("opens when Edit Role button is clicked in view slideout", async () => {
     const user = userEvent.setup();
     renderPage();
     const dialog = await openEditDrawer(user);
@@ -318,8 +321,11 @@ describe("status toggle", () => {
     renderPage();
     await waitFor(() =>
       expect(
-        screen.getByRole("button", { name: /deactivate user bob rep/i }),
+        screen.getByRole("button", { name: /view user bob rep/i }),
       ).toBeInTheDocument(),
+    );
+    await user.click(
+      screen.getByRole("button", { name: /view user bob rep/i }),
     );
     await user.click(
       screen.getByRole("button", { name: /deactivate user bob rep/i }),
@@ -335,8 +341,11 @@ describe("status toggle", () => {
     renderPage();
     await waitFor(() =>
       expect(
-        screen.getByRole("button", { name: /activate user carol inactive/i }),
+        screen.getByRole("button", { name: /view user carol inactive/i }),
       ).toBeInTheDocument(),
+    );
+    await user.click(
+      screen.getByRole("button", { name: /view user carol inactive/i }),
     );
     await user.click(
       screen.getByRole("button", { name: /activate user carol inactive/i }),
@@ -352,8 +361,11 @@ describe("status toggle", () => {
     renderPage();
     await waitFor(() =>
       expect(
-        screen.getByRole("button", { name: /deactivate user bob rep/i }),
+        screen.getByRole("button", { name: /view user bob rep/i }),
       ).toBeInTheDocument(),
+    );
+    await user.click(
+      screen.getByRole("button", { name: /view user bob rep/i }),
     );
     await user.click(
       screen.getByRole("button", { name: /deactivate user bob rep/i }),
@@ -369,8 +381,11 @@ describe("status toggle", () => {
     renderPage();
     await waitFor(() =>
       expect(
-        screen.getByRole("button", { name: /deactivate user bob rep/i }),
+        screen.getByRole("button", { name: /view user bob rep/i }),
       ).toBeInTheDocument(),
+    );
+    await user.click(
+      screen.getByRole("button", { name: /view user bob rep/i }),
     );
     await user.click(
       screen.getByRole("button", { name: /deactivate user bob rep/i }),

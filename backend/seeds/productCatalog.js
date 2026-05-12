@@ -28,7 +28,7 @@ const productCatalogSeed = [
     billingType: "Recurring (Monthly)",
     scopeBasedPricing: "None",
     basePrice: 0,
-    unitCost: 0,
+    unitCost: 25000,
     implementationFee: 0,
     overagePrice: 0,
     isBaselineProduct: true,
@@ -70,7 +70,7 @@ const productCatalogSeed = [
     billingType: "Recurring (Monthly)",
     scopeBasedPricing: "None",
     basePrice: 0,
-    unitCost: 0,
+    unitCost: 16000,
     implementationFee: 0,
     overagePrice: 0,
     isBaselineProduct: false,
@@ -103,13 +103,14 @@ const productCatalogSeed = [
     name: "Member Portal - Premium Features",
     sku: "NAV-MBR-PREM-001",
     productLineName: "Health Portals",
-    type: "Add-on",
+    compatibleCoreName: "Member Portal",
+    type: "Child",
     pricingModel: "PMPM",
     pricingStrategy: "Volume Bands",
     billingType: "Recurring (Monthly)",
     scopeBasedPricing: "None",
     basePrice: 0,
-    unitCost: 0,
+    unitCost: 4000,
     implementationFee: 0,
     overagePrice: 0,
     isBaselineProduct: false,
@@ -149,7 +150,7 @@ const productCatalogSeed = [
     billingType: "Recurring (Monthly)",
     scopeBasedPricing: "None",
     basePrice: 0,
-    unitCost: 0,
+    unitCost: 12000,
     implementationFee: 0,
     overagePrice: 0,
     isBaselineProduct: false,
@@ -189,7 +190,7 @@ const productCatalogSeed = [
     billingType: "Recurring (Monthly)",
     scopeBasedPricing: "None",
     basePrice: 0,
-    unitCost: 0,
+    unitCost: 30000,
     implementationFee: 0,
     overagePrice: 0,
     isBaselineProduct: false,
@@ -222,13 +223,14 @@ const productCatalogSeed = [
     name: "Provider Portal - Premium Features",
     sku: "NAV-PRV-PREM-001",
     productLineName: "Health Portals",
-    type: "Add-on",
+    compatibleCoreName: "Provider Portal",
+    type: "Child",
     pricingModel: "PMPM",
     pricingStrategy: "Volume Bands",
     billingType: "Recurring (Monthly)",
     scopeBasedPricing: "None",
     basePrice: 0,
-    unitCost: 0,
+    unitCost: 8000,
     implementationFee: 0,
     overagePrice: 0,
     isBaselineProduct: false,
@@ -268,7 +270,7 @@ const productCatalogSeed = [
     billingType: "Recurring (Monthly)",
     scopeBasedPricing: "None",
     basePrice: 0,
-    unitCost: 0,
+    unitCost: 25000,
     implementationFee: 0,
     overagePrice: 0,
     isBaselineProduct: false,
@@ -308,7 +310,7 @@ const productCatalogSeed = [
     billingType: "Recurring (Monthly)",
     scopeBasedPricing: "None",
     basePrice: 0,
-    unitCost: 0,
+    unitCost: 20000,
     implementationFee: 0,
     overagePrice: 0,
     isBaselineProduct: false,
@@ -350,7 +352,7 @@ const productCatalogSeed = [
     billingType: "Recurring (Monthly)",
     scopeBasedPricing: "Implementation Only",
     basePrice: 0.01,
-    unitCost: 0,
+    unitCost: 5000,
     implementationFee: 0,
     overagePrice: 0,
     isBaselineProduct: false,
@@ -371,7 +373,7 @@ const productCatalogSeed = [
     billingType: "Recurring (Monthly)",
     scopeBasedPricing: "None",
     basePrice: 0.03,
-    unitCost: 0,
+    unitCost: 40000,
     implementationFee: 62500,
     overagePrice: 0,
     isBaselineProduct: false,
@@ -476,7 +478,7 @@ const productCatalogSeed = [
     billingType: "Recurring (Monthly)",
     scopeBasedPricing: "None",
     basePrice: 0.02,
-    unitCost: 0,
+    unitCost: 30000,
     implementationFee: 2500,
     overagePrice: 0,
     isBaselineProduct: false,
@@ -497,7 +499,7 @@ const productCatalogSeed = [
     billingType: "Recurring (Monthly)",
     scopeBasedPricing: "None",
     basePrice: 0.02,
-    unitCost: 0,
+    unitCost: 15000,
     implementationFee: 22500,
     overagePrice: 0,
     isBaselineProduct: false,
@@ -560,7 +562,7 @@ const productCatalogSeed = [
     billingType: "Recurring (Monthly)",
     scopeBasedPricing: "None",
     basePrice: 500,
-    unitCost: 0,
+    unitCost: 2000,
     implementationFee: 11250,
     overagePrice: 0,
     isBaselineProduct: false,
@@ -581,7 +583,7 @@ const productCatalogSeed = [
     billingType: "Recurring (Monthly)",
     scopeBasedPricing: "None",
     basePrice: 500,
-    unitCost: 0,
+    unitCost: 2500,
     implementationFee: 16250,
     overagePrice: 0,
     isBaselineProduct: false,
@@ -602,7 +604,7 @@ const productCatalogSeed = [
     billingType: "Recurring (Monthly)",
     scopeBasedPricing: "None",
     basePrice: 500,
-    unitCost: 0,
+    unitCost: 2000,
     implementationFee: 10500,
     overagePrice: 0,
     isBaselineProduct: false,
@@ -623,7 +625,7 @@ const productCatalogSeed = [
     billingType: "Recurring (Monthly)",
     scopeBasedPricing: "None",
     basePrice: 500,
-    unitCost: 0,
+    unitCost: 2500,
     implementationFee: 15500,
     overagePrice: 0,
     isBaselineProduct: false,
@@ -728,7 +730,7 @@ const productCatalogSeed = [
     billingType: "Recurring (Monthly)",
     scopeBasedPricing: "None",
     basePrice: 500,
-    unitCost: 0,
+    unitCost: 2000,
     implementationFee: 25000,
     overagePrice: 0,
     isBaselineProduct: false,
@@ -749,7 +751,7 @@ const productCatalogSeed = [
     billingType: "Recurring (Monthly)",
     scopeBasedPricing: "None",
     basePrice: 0.01,
-    unitCost: 0,
+    unitCost: 8000,
     implementationFee: 12500,
     overagePrice: 0,
     isBaselineProduct: false,
@@ -770,7 +772,7 @@ const productCatalogSeed = [
     billingType: "Recurring (Monthly)",
     scopeBasedPricing: "Implementation Only",
     basePrice: 6000,
-    unitCost: 0,
+    unitCost: 5000,
     implementationFee: 0,
     overagePrice: 0,
     isBaselineProduct: false,
@@ -791,7 +793,7 @@ const productCatalogSeed = [
     billingType: "Recurring (Monthly)",
     scopeBasedPricing: "Implementation Only",
     basePrice: 6000,
-    unitCost: 0,
+    unitCost: 5000,
     implementationFee: 0,
     overagePrice: 0,
     isBaselineProduct: false,
@@ -812,7 +814,7 @@ const productCatalogSeed = [
     billingType: "Recurring (Monthly)",
     scopeBasedPricing: "None",
     basePrice: 600,
-    unitCost: 0,
+    unitCost: 2500,
     implementationFee: 2500,
     overagePrice: 0,
     isBaselineProduct: false,
@@ -846,13 +848,47 @@ async function seedProductCatalog(Product, ProductLine) {
     lineMap[line.name] = line._id;
   }
 
-  const docs = productCatalogSeed.map(({ productLineName, ...rest }) => ({
-    ...rest,
-    productLineId: productLineName ? (lineMap[productLineName] ?? null) : null,
-  }));
+  const docs = productCatalogSeed.map(
+    ({ productLineName, compatibleCoreName, ...rest }) => ({
+      ...rest,
+      productLineId: productLineName
+        ? (lineMap[productLineName] ?? null)
+        : null,
+    }),
+  );
 
   await Product.insertMany(docs);
   console.log(`  Products: inserted ${docs.length} records.`);
+
+  // Second pass — resolve compatibleCoreName → compatibleCoreIds
+  const coreNameEntries = productCatalogSeed.filter(
+    (p) => p.compatibleCoreName,
+  );
+  if (coreNameEntries.length > 0) {
+    const coreNames = [
+      ...new Set(coreNameEntries.map((p) => p.compatibleCoreName)),
+    ];
+    const cores = await Product.find(
+      { name: { $in: coreNames } },
+      "_id name",
+    ).lean();
+    const coreMap = {};
+    for (const core of cores) {
+      coreMap[core.name] = core._id;
+    }
+    for (const entry of coreNameEntries) {
+      const coreId = coreMap[entry.compatibleCoreName];
+      if (coreId) {
+        await Product.updateOne(
+          { sku: entry.sku },
+          { $set: { compatibleCoreIds: [coreId] } },
+        );
+      }
+    }
+    console.log(
+      `  Products: resolved compatibleCoreIds for ${coreNameEntries.length} child product(s).`,
+    );
+  }
 }
 
 /**

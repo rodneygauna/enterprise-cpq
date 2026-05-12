@@ -372,13 +372,19 @@ describe("Edit product", () => {
     renderPage();
     await waitFor(() =>
       expect(
-        screen.getAllByRole("button", { name: /edit/i }).length,
-      ).toBeGreaterThan(0),
+        screen.getByRole("button", {
+          name: /view details for care management platform/i,
+        }),
+      ).toBeInTheDocument(),
     );
-    const editBtns = screen.getAllByRole("button", {
-      name: /edit care management platform/i,
-    });
-    await user.click(editBtns[0]);
+    await user.click(
+      screen.getByRole("button", {
+        name: /view details for care management platform/i,
+      }),
+    );
+    await user.click(
+      screen.getByRole("button", { name: /edit care management platform/i }),
+    );
     expect(
       screen.getByRole("dialog", { name: /edit product/i }),
     ).toBeInTheDocument();
@@ -391,15 +397,18 @@ describe("Edit product", () => {
     renderPage();
     await waitFor(() =>
       expect(
-        screen.getAllByRole("button", {
-          name: /edit care management platform/i,
-        }).length,
-      ).toBeGreaterThan(0),
+        screen.getByRole("button", {
+          name: /view details for care management platform/i,
+        }),
+      ).toBeInTheDocument(),
     );
     await user.click(
-      screen.getAllByRole("button", {
-        name: /edit care management platform/i,
-      })[0],
+      screen.getByRole("button", {
+        name: /view details for care management platform/i,
+      }),
+    );
+    await user.click(
+      screen.getByRole("button", { name: /edit care management platform/i }),
     );
     const nameInput = screen.getByLabelText(/^name/i);
     await user.clear(nameInput);
@@ -424,15 +433,20 @@ describe("Duplicate product", () => {
     renderPage();
     await waitFor(() =>
       expect(
-        screen.getAllByRole("button", {
-          name: /duplicate care management platform/i,
-        }).length,
-      ).toBeGreaterThan(0),
+        screen.getByRole("button", {
+          name: /view details for care management platform/i,
+        }),
+      ).toBeInTheDocument(),
     );
     await user.click(
-      screen.getAllByRole("button", {
+      screen.getByRole("button", {
+        name: /view details for care management platform/i,
+      }),
+    );
+    await user.click(
+      screen.getByRole("button", {
         name: /duplicate care management platform/i,
-      })[0],
+      }),
     );
     await waitFor(() =>
       expect(duplicateProduct).toHaveBeenCalledWith("prod-1"),
@@ -450,15 +464,20 @@ describe("Delete product", () => {
     renderPage();
     await waitFor(() =>
       expect(
-        screen.getAllByRole("button", {
-          name: /delete care management platform/i,
-        }).length,
-      ).toBeGreaterThan(0),
+        screen.getByRole("button", {
+          name: /view details for care management platform/i,
+        }),
+      ).toBeInTheDocument(),
     );
     await user.click(
-      screen.getAllByRole("button", {
+      screen.getByRole("button", {
+        name: /view details for care management platform/i,
+      }),
+    );
+    await user.click(
+      screen.getByRole("button", {
         name: /delete care management platform/i,
-      })[0],
+      }),
     );
     expect(
       screen.getByRole("dialog", { name: /confirm delete/i }),
@@ -470,15 +489,20 @@ describe("Delete product", () => {
     renderPage();
     await waitFor(() =>
       expect(
-        screen.getAllByRole("button", {
-          name: /delete care management platform/i,
-        }).length,
-      ).toBeGreaterThan(0),
+        screen.getByRole("button", {
+          name: /view details for care management platform/i,
+        }),
+      ).toBeInTheDocument(),
     );
     await user.click(
-      screen.getAllByRole("button", {
+      screen.getByRole("button", {
+        name: /view details for care management platform/i,
+      }),
+    );
+    await user.click(
+      screen.getByRole("button", {
         name: /delete care management platform/i,
-      })[0],
+      }),
     );
     await user.click(screen.getByRole("button", { name: /^delete$/i }));
     await waitFor(() => expect(deleteProduct).toHaveBeenCalledWith("prod-1"));

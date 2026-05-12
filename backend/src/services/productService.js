@@ -260,13 +260,40 @@ async function resetCatalog(seedProducts) {
     for (const line of lines) {
       lineMap[line.name] = line._id;
     }
-    const resolved = seedProducts.map(({ productLineName, ...rest }) => ({
-      ...rest,
-      productLineId: productLineName
-        ? (lineMap[productLineName] ?? null)
-        : null,
-    }));
+    const resolved = seedProducts.map(
+      ({ productLineName, compatibleCoreName, ...rest }) => ({
+        ...rest,
+        productLineId: productLineName
+          ? (lineMap[productLineName] ?? null)
+          : null,
+      }),
+    );
     await Product.insertMany(resolved);
+
+    // Second pass — resolve compatibleCoreName → compatibleCoreIds
+    const coreNameEntries = seedProducts.filter((p) => p.compatibleCoreName);
+    if (coreNameEntries.length > 0) {
+      const coreNames = [
+        ...new Set(coreNameEntries.map((p) => p.compatibleCoreName)),
+      ];
+      const cores = await Product.find(
+        { name: { $in: coreNames } },
+        "_id name",
+      ).lean();
+      const coreMap = {};
+      for (const core of cores) {
+        coreMap[core.name] = core._id;
+      }
+      for (const entry of coreNameEntries) {
+        const coreId = coreMap[entry.compatibleCoreName];
+        if (coreId) {
+          await Product.updateOne(
+            { sku: entry.sku },
+            { $set: { compatibleCoreIds: [coreId] } },
+          );
+        }
+      }
+    }
   } else {
     await Product.insertMany(seedProducts);
   }
