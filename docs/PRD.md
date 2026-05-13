@@ -199,6 +199,65 @@ and real-time financial calculations.
   committing to the database.
 - **FR-PROD-7:** Duplicate product action — clones a product with "Copy of" prefix for fast catalog expansion.
 - **FR-PROD-8:** Reset Catalog — reverts to default seed data after a confirmation dialog.
+- **FR-PROD-9:** The product add/edit form must be organized into five sequential wizard steps.
+  "Next" is blocked until the current step passes validation; backward navigation to any previously
+  visited step is always permitted.
+
+  | Step | Label                 | Fields                                                                             |
+  | ---- | --------------------- | ---------------------------------------------------------------------------------- |
+  | 1    | Identity              | Name, SKU, Product Line, Type, Description                                         |
+  | 2    | Pricing Configuration | Pricing Model, Pricing Strategy, Billing Type, Scope-Based Pricing                 |
+  | 3    | Pricing Details       | Price inputs and editors — conditional per strategy (see FR-PROD-10); live preview |
+  | 4    | Behavior Flags        | Boolean flags — conditionally visible per type (see FR-PROD-10)                    |
+  | 5    | Relationships         | Compatible Core IDs (Child only), Recommended Product IDs                          |
+
+- **FR-PROD-10:** The following fields must be conditionally shown or hidden (`display:none`,
+  excluded from keyboard tab order and ARIA tree) based on current form state:
+
+  | Field                        | Visible when                                |
+  | ---------------------------- | ------------------------------------------- |
+  | `basePrice`                  | `pricingStrategy === "Standard"`            |
+  | TiersEditor                  | `pricingStrategy === "Tiered"`              |
+  | VolumeBandsEditor            | `pricingStrategy === "Volume Bands"`        |
+  | `overagePrice`               | `pricingModel === "Per Unit / Transaction"` |
+  | `isBaselineProduct`          | `type === "Core"`                           |
+  | `inheritTierVolumesFromCore` | `type === "Child"`                          |
+  | `compatibleCoreIds`          | `type === "Child"`                          |
+
+- **FR-PROD-11:** Step 3 must include a live price preview panel that recalculates in real-time as
+  price-related fields change. It must display effective monthly price, annual total, and
+  implementation fee (where applicable). The panel must include editable preview inputs for
+  membership count (default: 1 000) and term months (default: 12) so admins can model different
+  scenarios without saving. The panel must use `aria-live="polite"`.
+
+- **FR-PROD-12:** All form validation messages must be field-level and descriptive, linked to their
+  respective field via `aria-describedby`:
+
+  | Condition                                           | Message                                                                         |
+  | --------------------------------------------------- | ------------------------------------------------------------------------------- |
+  | `name` is empty                                     | "Product name is required"                                                      |
+  | `sku` exceeds 100 characters                        | "SKU must be 100 characters or fewer"                                           |
+  | Price field is negative                             | "Price must be 0 or greater"                                                    |
+  | Strategy is Tiered but `tiers` is empty             | "At least one tier is required when Pricing Strategy is Tiered"                 |
+  | Strategy is Volume Bands but `volumeBands` is empty | "At least one volume band is required when Pricing Strategy is Volume Bands"    |
+  | Band `maxMembers` not a positive integer or null    | "Maximum members must be a positive whole number, or leave blank for unlimited" |
+
+- **FR-PROD-13:** `TiersEditor` and `VolumeBandsEditor` must be extracted from `Products.jsx` into
+  standalone components at `frontend/src/components/TiersEditor.jsx` and
+  `frontend/src/components/VolumeBandsEditor.jsx` for reuse by the Quote Builder and future pages.
+
+- **FR-PROD-14:** The read-only product view drawer must be redesigned as a `ProductDetail`
+  component that presents only contextually relevant information:
+  - Organized into the same five section groups as the edit wizard, using `<h6>` dividers.
+  - Applies FR-PROD-10 conditional visibility: fields that do not apply to the product's `type`,
+    `pricingStrategy`, or `pricingModel` are omitted entirely (never shown as "—" or "$0.00").
+  - Boolean flags that are `false` and contextually irrelevant to the product type are hidden.
+  - Tiers rendered as a two-column table (Min Volume / Price); volume bands as a four-column table
+    (Band / Max Members / Price / Impl. Fee). Tables include `<caption>` and `<th scope="col">`.
+  - `compatibleCoreIds` and `recommendedProductIds` resolved and displayed as product names.
+  - View drawer uses `offcanvas-lg` for consistency with the edit drawer.
+
+  _Cross-references: FR-PROD-1, FR-PROD-2, FR-TTIP-8, NFR-7_
 
 ---
 

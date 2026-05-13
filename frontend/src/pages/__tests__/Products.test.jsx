@@ -289,7 +289,7 @@ describe("Add product", () => {
     ).toBeInTheDocument();
   });
 
-  it("shows error when name is empty on submit", async () => {
+  it("shows error when name is empty on Next (Step 1)", async () => {
     const user = userEvent.setup();
     renderPage();
     await waitFor(() =>
@@ -299,13 +299,10 @@ describe("Add product", () => {
     );
     await user.click(screen.getByRole("button", { name: /add product/i }));
     const form = screen.getByRole("form", { name: /product form/i });
-    const submitBtn = within(form).getByRole("button", {
-      name: /create product/i,
-    });
-    // Clear the name field if pre-filled
+    // Step 1 shows Next button, not Create Product
     const nameInput = within(form).getByLabelText(/name/i);
     await user.clear(nameInput);
-    await user.click(submitBtn);
+    await user.click(within(form).getByRole("button", { name: /^next$/i }));
     await waitFor(() =>
       expect(within(form).getByText(/name is required/i)).toBeInTheDocument(),
     );
@@ -325,6 +322,11 @@ describe("Add product", () => {
     const nameInput = within(form).getByLabelText(/name/i);
     await user.clear(nameInput);
     await user.type(nameInput, "New Product");
+    // Navigate through all 5 steps
+    await user.click(within(form).getByRole("button", { name: /^next$/i })); // 1→2
+    await user.click(within(form).getByRole("button", { name: /^next$/i })); // 2→3
+    await user.click(within(form).getByRole("button", { name: /^next$/i })); // 3→4
+    await user.click(within(form).getByRole("button", { name: /^next$/i })); // 4→5
     await user.click(
       within(form).getByRole("button", { name: /create product/i }),
     );
@@ -354,6 +356,11 @@ describe("Add product", () => {
     const nameInput = within(form).getByLabelText(/name/i);
     await user.clear(nameInput);
     await user.type(nameInput, "Duplicate SKU Product");
+    // Navigate through all 5 steps
+    await user.click(within(form).getByRole("button", { name: /^next$/i })); // 1→2
+    await user.click(within(form).getByRole("button", { name: /^next$/i })); // 2→3
+    await user.click(within(form).getByRole("button", { name: /^next$/i })); // 3→4
+    await user.click(within(form).getByRole("button", { name: /^next$/i })); // 4→5
     await user.click(
       within(form).getByRole("button", { name: /create product/i }),
     );
@@ -413,6 +420,10 @@ describe("Edit product", () => {
     const nameInput = screen.getByLabelText(/^name/i);
     await user.clear(nameInput);
     await user.type(nameInput, "Updated Name");
+    // In edit mode maxStepReached=5; jump directly to Step 5 via step nav button
+    await user.click(
+      screen.getByRole("button", { name: /step 5: relationships/i }),
+    );
     await user.click(screen.getByRole("button", { name: /save changes/i }));
     await waitFor(() =>
       expect(updateProduct).toHaveBeenCalledWith(
@@ -575,8 +586,16 @@ describe("Conditional editors", () => {
     );
     await user.click(screen.getByRole("button", { name: /add product/i }));
     const form = screen.getByRole("form", { name: /product form/i });
-    const strategySelect = within(form).getByLabelText(/pricing strategy/i);
+    // Fill name so Step 1 validation passes
+    await user.type(within(form).getByLabelText(/^name/i), "Test Product");
+    // Pricing Strategy is on Step 2; navigate there first
+    await user.click(within(form).getByRole("button", { name: /^next$/i })); // 1→2
+    const strategySelect = within(form).getByRole("combobox", {
+      name: /pricing strategy/i,
+    });
     await user.selectOptions(strategySelect, "Tiered");
+    // TiersEditor is on Step 3 (Pricing Details)
+    await user.click(within(form).getByRole("button", { name: /^next$/i })); // 2→3
     expect(
       within(form).getByRole("group", { name: /tiers/i }),
     ).toBeInTheDocument();
@@ -592,8 +611,16 @@ describe("Conditional editors", () => {
     );
     await user.click(screen.getByRole("button", { name: /add product/i }));
     const form = screen.getByRole("form", { name: /product form/i });
-    const strategySelect = within(form).getByLabelText(/pricing strategy/i);
+    // Fill name so Step 1 validation passes
+    await user.type(within(form).getByLabelText(/^name/i), "Test Product");
+    // Pricing Strategy is on Step 2; navigate there first
+    await user.click(within(form).getByRole("button", { name: /^next$/i })); // 1→2
+    const strategySelect = within(form).getByRole("combobox", {
+      name: /pricing strategy/i,
+    });
     await user.selectOptions(strategySelect, "Volume Bands");
+    // VolumeBandsEditor is on Step 3 (Pricing Details)
+    await user.click(within(form).getByRole("button", { name: /^next$/i })); // 2→3
     expect(
       within(form).getByRole("group", { name: /volume bands/i }),
     ).toBeInTheDocument();

@@ -367,3 +367,70 @@ export function resolveMarginStatus(
   if (marginPercent >= effectiveYellow) return "yellow";
   return "red";
 }
+
+/**
+ * Calculates a live price preview for the ProductForm wizard (FR-PROD-11).
+ *
+ * Converts form state (string-typed fields from controlled inputs) into a
+ * product-like object and delegates to calculateLineItem with preview inputs.
+ *
+ * Notes:
+ *  - "Per Unit / Transaction" and "Hourly Rate" models return $0 because those
+ *    pricing models require quantity/hours inputs not present in the preview.
+ *  - Invalid numeric strings are treated as 0 rather than throwing.
+ *
+ * @param {object} form - ProductForm state (fields may be empty strings)
+ * @param {number} [membershipCount=1000] - Preview membership count
+ * @param {number} [termMonths=12] - Preview term in months
+ * @returns {{ monthlyPrice: number, annualTotal: number, implementationFee: number }}
+ */
+export function previewPrice(form, membershipCount = 1000, termMonths = 12) {
+  const mc = Math.max(0, Number(membershipCount) || 0);
+  const tm = Math.max(1, Number(termMonths) || 12);
+
+  const product = {
+    pricingModel: form.pricingModel || "PMPM",
+    pricingStrategy: form.pricingStrategy || "Standard",
+    scopeBasedPricing: form.scopeBasedPricing || "None",
+    basePrice:
+      form.basePrice !== "" && form.basePrice != null
+        ? Math.max(0, Number(form.basePrice) || 0)
+        : 0,
+    implementationFee:
+      form.implementationFee !== "" && form.implementationFee != null
+        ? Math.max(0, Number(form.implementationFee) || 0)
+        : 0,
+    isQuantityBased: Boolean(form.isQuantityBased),
+    inheritTierVolumesFromCore: Boolean(form.inheritTierVolumesFromCore),
+    tiers: (form.tiers || []).map((t) => ({
+      min: Number(t.min) || 0,
+      price: Number(t.price) || 0,
+    })),
+    volumeBands: (form.volumeBands || []).map((b) => ({
+      label: b.label || "",
+      maxMembers:
+        b.maxMembers !== "" && b.maxMembers != null
+          ? Number(b.maxMembers)
+          : null,
+      price: Number(b.price) || 0,
+      implPrice: Number(b.implPrice) || 0,
+    })),
+  };
+
+  const result = calculateLineItem(product, {
+    membershipCount: mc,
+    termMonths: tm,
+    quantity: 1,
+    annualUnits: 0,
+    estimatedHours: 0,
+  });
+
+  const monthlyPrice =
+    tm > 0 ? Math.round((result.extendedPrice / tm) * 100) / 100 : 0;
+
+  return {
+    monthlyPrice,
+    annualTotal: result.extendedPrice,
+    implementationFee: result.implementationFee,
+  };
+}
